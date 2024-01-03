@@ -2,14 +2,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Mono">
   <script src="https://d3js.org/d3.v6.js"></script>
 </head>
 <body>
   <!-- Initialize a select button -->
-  <select style="display: inline;" id="graphSelect"></select>
+  <select style="display: inline; font-family: Roboto Mono, sans-serif;" id="graphSelect"></select>
 
   <!-- Consider using MathML in the future -->
-  <p style="display: inline; text-align: right;" id="equation"></p>
+  <p style="display: inline; text-align: right; font-family: Roboto Mono, sans-serif;" id="equation"></p>
 
   <!-- Create a div where the graph will take place -->
   <div id="display"></div>
@@ -1165,6 +1166,7 @@ function enterNode(enter) {
         return d.name;
       }
     })
+    .style("font-family", "Roboto Mono, sans-serif")
     .style("font-weight", "bold")
     .style("text-anchor", "middle")
     .style("dominant-baseline", "middle");
