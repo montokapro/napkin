@@ -1,0 +1,17 @@
+{
+  "name": "napkin",
+  "version": "1.0.0",
+  "description": "A visual exploration of algebra",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "author": "",
+  "license": "CC0-1.0",
+  "dependencies": {
+    "mocha": "^10.2.0"
+  }
+}
