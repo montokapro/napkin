@@ -135,4 +135,53 @@ function remove_parent_id(env, operation_id, value_id) {
   remove_parent(operation, value);
 }
 
-export {add_parent, add_parent_id, remove_parent, remove_parent_id};
+function add_alias(value, alias) {
+  if (!('aliases' in value)) {
+    value.aliases = new Set([alias]);
+  } else {
+    value.aliases.add(alias);
+  }
+}
+
+function add_alias_id(env, value_id, alias_id) {
+  const value = env[value_id];
+  const alias = env[alias_id];
+
+  add_alias(value, alias);
+
+  if (!('alias_ids' in value)) {
+    value.alias_ids = [];
+  }
+
+  idempotent_add(value.alias_ids, alias_id);
+}
+
+function remove_alias(value, alias) {
+  if ('aliases' in value) {
+    value.aliases.delete(alias);
+
+    if (value.aliases.size === 0) {
+      delete value.aliases;
+    }
+  }
+}
+
+function remove_alias_id(env, value_id, alias_id) {
+  const value = env[value_id];
+  const alias = env[alias_id];
+
+  if ('alias_ids' in value) {
+    idempotent_remove(value.alias_ids, alias_id);
+
+    if (value.alias_ids.length === 0) {
+      delete value.alias_ids;
+    }
+  }
+
+  remove_alias(value, alias);
+}
+
+export {
+  add_parent, add_parent_id, remove_parent, remove_parent_id,
+  add_alias, add_alias_id, remove_alias, remove_alias_id,
+};
