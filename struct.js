@@ -33,6 +33,60 @@ function idempotent_remove(array, value) {
   }
 }
 
+function add_object(name) {
+  return function(source, target) {
+    if (!(name in source)) {
+      source[name] = new Set([target]);
+    } else {
+      source[name].add(target);
+    }
+  };
+}
+
+function add_id(name, add_object) {
+  return function(env, source_id, target_id) {
+    const source = env[source_id];
+    const target = env[target_id];
+
+    add_object(source, target);
+
+    if (!(name in source)) {
+      source[name] = [];
+    }
+
+    idempotent_add(source[name], target_id);
+  };
+}
+
+function remove_object(name) {
+  return function(source, target) {
+    if (name in source) {
+      source[name].delete(target);
+
+      if (source[name].size === 0) {
+        delete source[name];
+      }
+    }
+  };
+}
+
+function remove_id(name, remove_object) {
+  return function(env, source_id, target_id) {
+    const source = env[source_id];
+    const target = env[target_id];
+
+    if (name in source) {
+      idempotent_remove(source[name], target_id);
+
+      if (source[name].length === 0) {
+        delete source[name];
+      }
+    }
+
+    remove_object(source, target);
+  };
+}
+
 // Copied from jQuery implementation
 // https://stackoverflow.com/questions/679915/how-do-i-test-for-an-empty-javascript-object
 function isEmptyObject(obj) {
@@ -135,51 +189,10 @@ function remove_parent_id(env, operation_id, value_id) {
   remove_parent(operation, value);
 }
 
-function add_alias(value, alias) {
-  if (!('aliases' in value)) {
-    value.aliases = new Set([alias]);
-  } else {
-    value.aliases.add(alias);
-  }
-}
-
-function add_alias_id(env, value_id, alias_id) {
-  const value = env[value_id];
-  const alias = env[alias_id];
-
-  add_alias(value, alias);
-
-  if (!('alias_ids' in value)) {
-    value.alias_ids = [];
-  }
-
-  idempotent_add(value.alias_ids, alias_id);
-}
-
-function remove_alias(value, alias) {
-  if ('aliases' in value) {
-    value.aliases.delete(alias);
-
-    if (value.aliases.size === 0) {
-      delete value.aliases;
-    }
-  }
-}
-
-function remove_alias_id(env, value_id, alias_id) {
-  const value = env[value_id];
-  const alias = env[alias_id];
-
-  if ('alias_ids' in value) {
-    idempotent_remove(value.alias_ids, alias_id);
-
-    if (value.alias_ids.length === 0) {
-      delete value.alias_ids;
-    }
-  }
-
-  remove_alias(value, alias);
-}
+const add_alias = add_object('aliases');
+const add_alias_id = add_id('alias_ids', add_alias);
+const remove_alias = remove_object('aliases');
+const remove_alias_id = remove_id('alias_ids', remove_alias);
 
 export {
   add_parent, add_parent_id, remove_parent, remove_parent_id,
