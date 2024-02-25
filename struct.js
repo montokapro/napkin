@@ -33,7 +33,8 @@ function idempotent_remove(array, value) {
   }
 }
 
-function add_object(name) {
+// Efficient data structure, hard to serialize
+const add_to_set = function(name) {
   return function(source, target) {
     if (!(name in source)) {
       source[name] = new Set([target]);
@@ -41,24 +42,21 @@ function add_object(name) {
       source[name].add(target);
     }
   };
-}
+};
 
-function add_id(name, add_object) {
-  return function(env, source_id, target_id) {
-    const source = env[source_id];
-    const target = env[target_id];
-
-    add_object(source, target);
-
+// Inefficient data structure, easy to serialize
+const add_to_array = function(name) {
+  return function(source, target) {
     if (!(name in source)) {
       source[name] = [];
     }
 
-    idempotent_add(source[name], target_id);
+    idempotent_add(source[name], target);
   };
-}
+};
 
-function remove_object(name) {
+// Efficient data structure, hard to serialize
+const remove_from_set = function(name) {
   return function(source, target) {
     if (name in source) {
       source[name].delete(target);
@@ -68,133 +66,127 @@ function remove_object(name) {
       }
     }
   };
-}
+};
 
-function remove_id(name, remove_object) {
-  return function(env, source_id, target_id) {
-    const source = env[source_id];
-    const target = env[target_id];
-
+// Inefficient data structure, easy to serialize
+const remove_from_array = function(name) {
+  return function(source, target) {
     if (name in source) {
-      idempotent_remove(source[name], target_id);
+      idempotent_remove(source[name], target);
 
       if (source[name].length === 0) {
         delete source[name];
       }
     }
-
-    remove_object(source, target);
   };
-}
+};
 
-// Copied from jQuery implementation
-// https://stackoverflow.com/questions/679915/how-do-i-test-for-an-empty-javascript-object
-function isEmptyObject(obj) {
-  let name;
-  for (name in obj) {
-    if (obj.hasOwnProperty(name)) {
-      return false;
-    }
-  }
-  return true;
-}
+// Include both data structures
+const add_to_env = function(set_name, array_name) {
+  const add_set = add_to_set(set_name);
+  const add_array = add_to_array(array_name);
 
-function add_parent(operation, value) {
-  if ('parent' in operation && operation.parent != value) {
-    throw new Error('parent exists and does not match value');
-  }
+  return function(env, source_id, target_id) {
+    const source = env[source_id];
 
-  operation.parent = value;
+    add_set(source, target);
+    add_array(source, target_id);
+  };
+};
 
-  if (!('references' in value)) {
-    value.references = new Map();
-  }
+// Include both data structures
+const remove_from_env = function(set_name, array_name) {
+  const remove_set = remove_from_set(set_name);
+  const remove_array = remove_from_array(array_name);
 
-  if (!(value.references.has(operation))) {
-    value.references.set(operation, new Set());
-  }
+  return function(env, source_id, target_id) {
+    const source = env[source_id];
 
-  value.references.get(operation).add(null);
-}
+    remove_array(source, target);
+    remove_set(source, target);
+  };
+};
 
-function add_parent_id(env, operation_id, value_id) {
-  const operation = env.operations[operation_id];
-  const value = env.values[value_id];
+const add_alias_to_set = add_to_set('aliases');
+const add_alias_to_array = add_to_array('alias_ids');
+const add_alias_to_env = add_to_env('aliases', 'alias_ids');
+const remove_alias_from_set = remove_from_set('aliases');
+const remove_alias_from_array = remove_from_array('alias_ids');
+const remove_alias_from_env = remove_from_env('aliases', 'alias_ids');
 
-  if ('parent_id' in operation && operation.parent_id != value_id) {
-    throw new Error('parent_id exists and does not match value_id');
-  }
+const add_parent_to_set = add_to_set('parents');
+const add_parent_to_array = add_to_array('parent_ids');
+const add_parent_to_env = add_to_env('parents', 'parent_ids');
+const remove_parent_from_set = remove_from_set('parents');
+const remove_parent_from_array = remove_from_array('parent_ids');
+const remove_parent_from_env = remove_from_env('parents', 'parent_ids');
 
-  add_parent(operation, value);
+const add_child_to_set = add_to_set('children');
+const add_child_to_array = add_to_array('child_ids');
+const add_child_to_env = add_to_env('children', 'child_ids');
+const remove_child_from_set = remove_from_set('children');
+const remove_child_from_array = remove_from_array('child_ids');
+const remove_child_from_env = remove_from_env('children', 'child_ids');
 
-  operation.parent_id = value_id;
+const repair = function(env) {
+  const f = function(
+      source_id_name, source_object_name,
+      target_id_name, target_object_name,
+  ) {
+    const add_id = add_to_array(target_id_name);
+    const add_object = add_to_set(target_object_name);
 
-  if (!('reference_ids' in value)) {
-    value.reference_ids = {};
-  }
+    return function(source_id, source) {
+      if (source_id_name in source) {
+        for (const target_id of source[source_id_name]) {
+          const target = env[target_id];
 
-  if (!(operation_id in value.reference_ids)) {
-    value.reference_ids[operation_id] = [];
-  }
-
-  idempotent_add(value.reference_ids[operation_id], null);
-}
-
-function remove_parent(operation, value) {
-  if ('parent' in operation && operation.parent != value) {
-    throw new Error('parent exists and does not match value');
-  }
-
-  if ('references' in value) {
-    if (value.references.has(operation)) {
-      value.references.get(operation).delete(null);
-
-      if (value.references.get(operation).size === 0) {
-        value.references.delete(operation);
+          add_id(target, source_id);
+          add_object(target, source);
+        }
       }
-    }
 
-    if (isEmptyObject(value.references)) {
-      delete value.references;
-    }
-  }
-
-  delete operation.parent;
-}
-
-function remove_parent_id(env, operation_id, value_id) {
-  const operation = env.operations[operation_id];
-  const value = env.values[value_id];
-
-  if ('parent_id' in operation && operation.parent_id != value_id) {
-    throw new Error('parent_id exists and does not match value_id');
-  }
-
-  if ('reference_ids' in value) {
-    if (operation_id in value.reference_ids) {
-      idempotent_remove(value.reference_ids[operation_id], null);
-
-      if (value.reference_ids[operation_id].length === 0) {
-        delete value.reference_ids[operation_id];
+      if (source_object_name in source) {
+        for (const target of source[source_object_name]) {
+          add_id(target, source_id);
+          add_object(target, source);
+        }
       }
-    }
+    };
+  };
 
-    if (isEmptyObject(value.reference_ids)) {
-      delete value.reference_ids;
-    }
+  const repair_aliases = f('alias_ids', 'aliases', 'alias_ids', 'aliases');
+  const repair_parents = f('parent_ids', 'parents', 'child_ids', 'children');
+  const repair_children = f('child_ids', 'children', 'parent_ids', 'parents');
+
+  for (let i = 0; i < env.length; i++) {
+    repair_aliases(i, env[i]);
+    repair_parents(i, env[i]);
+    repair_children(i, env[i]);
   }
+};
 
-  delete operation.parent_id;
-
-  remove_parent(operation, value);
-}
-
-const add_alias = add_object('aliases');
-const add_alias_id = add_id('alias_ids', add_alias);
-const remove_alias = remove_object('aliases');
-const remove_alias_id = remove_id('alias_ids', remove_alias);
+const delete_objects = function(env) {
+  for (let i = 0; i < env.length; i++) {
+    delete env[i]['aliases'];
+    delete env[i]['parents'];
+    delete env[i]['children'];
+  }
+};
 
 export {
-  add_parent, add_parent_id, remove_parent, remove_parent_id,
-  add_alias, add_alias_id, remove_alias, remove_alias_id,
+  add_to_set, add_to_array, add_to_env,
+  remove_from_set, remove_from_array, remove_from_env,
+
+  add_alias_to_set, add_alias_to_array, add_alias_to_env,
+  remove_alias_from_set, remove_alias_from_array, remove_alias_from_env,
+
+  add_parent_to_set, add_parent_to_array, add_parent_to_env,
+  remove_parent_from_set, remove_parent_from_array, remove_parent_from_env,
+
+  add_child_to_set, add_child_to_array, add_child_to_env,
+  remove_child_from_set, remove_child_from_array, remove_child_from_env,
+
+  repair,
+  delete_objects,
 };
