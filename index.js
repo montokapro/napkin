@@ -1,119 +1,335 @@
-"use strict";
+'use strict';
 
-import { graphs } from './graphs.js';
+import {graphs} from './graphs.js';
+import {hyperlogarithmicOperations} from './operations.js';
+import {centerPoint, targetSlope} from './geometry.js';
+import {
+  add_to_array as addToArray,
+  remove_from_array as removeFromArray,
+
+  iterable_map as iterableMap,
+  object_iterable as objectIterable,
+  objects_by_ids_iterable as objectsByIdsIterable,
+} from './struct.js';
 
 const width = 1024;
 const height = 1024;
-const thickness = 16;
-const spacing = 128;
+const thickness = 1 / 8;
+const scale = 128;
 
-var graph;
+let env;
+let envObjectsByIdsIterable;
+let clickedEdgeId;
+let clickedPortId;
+let clickedNodeId;
 
-function graphId(d) {
-  return d.name;
-}
+const equation = d3.select('#equation');
 
-// A custom comparable would be preferable, but d3 uses a key
-// Consider: https://d3js.org/d3-array/intern
-function pointId(id) {
-  return JSON.stringify(id);
-}
-
-function nodeId(d) {
-  return pointId(d.id);
-}
-
-function edgeId(d) {
-  return pointId([d.source, d.target]);
-}
-
-const equation = d3.select("#equation");
-
-const display = d3.select("#display");
+const display = d3.select('#display');
 
 function graphClick() {
-  graph.clickedNode = null;
-  update();
+  clickedEdgeId = null;
+  clickedNodeId = null;
+  clickedPortId = null;
+
+  updatePortVisible(image.selectAll('.node').selectAll('.port'));
 }
 
-const svg = display.append("svg")
-  .attr("width", width)
-  .attr("height", height)
-  .on("click", graphClick);
-
-const defs = svg.append("defs");
-
-// http://xn--dahlstrm-t4a.net/svg/filters/arrow-with-dropshadow-lighter.svg
-// https://github.com/wbzyl/d3-notes/blob/master/hello-drop-shadow.html
-const filter = defs.append("filter")
-  .attr("id", "drop-shadow");
-
-filter.append("feGaussianBlur")
-  .attr("in", "SourceGraphic")
-  .attr("stdDeviation", 2)
-  .attr("result", "blur");
-
-const feComponentTransfer = filter.append("feComponentTransfer")
-  .attr("result", "alphaBlur");
-
-feComponentTransfer.append("feFuncA")
-  .attr("type", "linear")
-  .attr("slope", "0.5");
-
-filter.append("feOffset")
-  .attr("in", "alphaBlur")
-  .attr("dx", 4)
-  .attr("dy", 4)
-  .attr("result", "offsetBlur");
-
-const feMerge = filter.append("feMerge");
-
-feMerge.append("feMergeNode")
-  .attr("in", "offsetBlur");
-
-feMerge.append("feMergeNode")
-  .attr("in", "SourceGraphic");
-
-const image = svg.append("g")
-  .attr("id", "image")
-  .style("filter", "url(#drop-shadow)");
-
-function edgeToggle(edge, on) {
-  if (edge.selected === on) {
-    return;
-  }
-
-  edge.selected = on;
-
-  nodeToggle(edge.source, on);
-  nodeToggle(edge.target, on);
+function handleZoom(e) {
+  d3.select('#image')
+      .attr('transform', e.transform);
 }
 
-function nodeToggle(nodeId, on) {
-  const node = graph.nodes.find(function(n) { return pointId(n.id) == pointId(nodeId) });
-  if (node != null && node.operator) {
-    node.selected = on;
-  }
+const zoom = d3.zoom()
+    .on('zoom', handleZoom);
 
-  if (node == null || node.operator || node.name != null) {
-    graph.edges.forEach(function(e) {
-      if (pointId(e.source) == pointId(nodeId) || pointId(e.target) == pointId(nodeId)) {
-        edgeToggle(e, on);
+// https://www.d3indepth.com/zoom-and-pan/
+const svg = display
+    .append('svg')
+    .attr('width', width)
+    .attr('height', height)
+    .call(zoom)
+    .call(zoom.transform, d3.zoomIdentity.scale(scale))
+    .on('click', graphClick);
+
+const background = svg
+    .append('rect')
+    .attr('width', '100%')
+    .attr('height', '100%')
+    .style('fill', 'none');
+
+const image = svg
+    .append('g')
+    .attr('id', 'image')
+    .attr('transform', 'scale(' + scale + ')')
+    .style('pointer-events', 'all');
+
+function equationVisitors(selected) {
+  const visits = {};
+
+  const nameElse = function(f, a) {
+    if ('name' in a) {
+      return [
+        true,
+        {
+          operator: Infinity,
+          value: a['name'],
+        },
+      ];
+    } else {
+      return f(a);
+    }
+  };
+
+  const visit = function(f, a) {
+    if ('name' in a) {
+      return [
+        true,
+        {
+          operator: Infinity,
+          value: a['name'],
+        },
+      ];
+    }
+
+    if (a.id in visits) {
+      if (visits[a.id]) {
+        // already visited, error
+        return [undefined];
+      } else {
+        // already visiting, ignore
+        return [false];
       }
-    });
+    } else {
+      visits[a.id] = false;
+      const r = f(a);
+      visits[a.id] = true;
+      return r;
+    }
+  };
+
+  function nodeVisit(node) {
+    node.selected = selected;
+    updateNodeFill(image.selectAll('#UUID-' + node.id).select('circle'));
+
+    const portEquations = [];
+    for (const port of envObjectsByIdsIterable(node, 'portIds')) {
+      const portResult = visit(portVisit, port);
+      switch (portResult[0]) {
+        case true:
+          portEquations.push(portResult[1]);
+          break;
+      }
+    }
+
+    if (portEquations.length === 0) {
+      return [undefined];
+    } else if (portEquations.length === 1) {
+      return [true, portEquations[0]];
+    } else {
+      return [
+        true,
+        {
+          operator: -Infinity,
+          value: portEquations.map(function(equation) {
+            return equation.value;
+          }).join(' = '),
+        },
+      ];
+    }
   }
+
+  const prettyNumber = function(number) {
+    switch (number) {
+      case -Infinity:
+        return '-∞';
+      case Infinity:
+        return '∞';
+      default:
+        return number;
+    }
+  };
+
+  function portVisit(port) {
+    port.selected = selected;
+
+    const node = env[port.nodeId];
+
+    let operation;
+    if ('operator in node') {
+      operation = hyperlogarithmicOperations[node.operator];
+    }
+
+    let visitingPort = false;
+    const edgeEquations = [];
+    for (const edge of envObjectsByIdsIterable(port, 'edgeIds')) {
+      const edgeResult = visit(edgeVisit, edge);
+      switch (edgeResult[0]) {
+        case undefined:
+          if (operation !== undefined) {
+            return edgeResult;
+          }
+        case false:
+          visitingPort = true;
+          break;
+        case true:
+          edgeEquations.push(edgeResult[1]);
+          break;
+      }
+    }
+
+    let edgeResult;
+    if (edgeEquations.length === 0) {
+      if (visitingPort || operation === undefined) {
+        edgeResult = [undefined];
+      } else {
+        edgeResult = [
+          true,
+          {
+            operator: Infinity,
+            value: prettyNumber(operation.identity),
+          },
+        ];
+      }
+    } else if (edgeEquations.length === 1) {
+      edgeResult = [true, edgeEquations[0]];
+    } else {
+      let commutationSymbol = '=';
+      if (operation !== undefined) {
+        commutationSymbol = operation.commutation.symbol;
+      }
+      edgeResult = [
+        true,
+        {
+          operator: node.operator,
+          value: edgeEquations.map(function(equation) {
+            if (equation.operator < node.operator) {
+              return '(' + equation.value + ')';
+            } else {
+              return equation.value;
+            }
+          }).join(' ' + commutationSymbol + ' '),
+        },
+      ];
+    }
+
+    const nodeResult = visit(nodeVisit, node);
+    switch (nodeResult[0]) {
+      case undefined:
+        return nodeResult;
+      case false:
+      // TODO: inverse
+        return edgeResult;
+    }
+
+    let reversionSymbol = '=';
+    if (operation === undefined) {
+      return nodeResult;
+    } else {
+      reversionSymbol = operation.reversion.symbol;
+    }
+
+    let edgeEquation;
+    if (edgeResult[0]) {
+      const nodeEquation = nodeResult[1];
+      const edgeEquation = edgeResult[1];
+
+      return [
+        true,
+        {
+          operator: node.operator,
+          value: [nodeEquation, edgeEquation]
+              .map(function(equation) {
+                if (equation.operator < node.operator) {
+                  return '(' + equation.value + ')';
+                } else {
+                  return equation.value;
+                }
+              })
+              .join(' ' + reversionSymbol + ' '),
+        },
+      ];
+    } else {
+      return nodeResult;
+    }
+  }
+
+  function edgeVisit(edge) {
+    edge.selected = selected;
+    updateEdgeStroke(image.selectAll('#UUID-' + edge.id));
+
+    const portEquations = [];
+    for (const port of envObjectsByIdsIterable(edge, 'portIds')) {
+      const portResult = visit(portVisit, port);
+      switch (portResult[0]) {
+        case true:
+          portEquations.push(portResult[1]);
+          break;
+      }
+    }
+
+    if (portEquations.length === 0) {
+      return [undefined];
+    } else if (portEquations.length === 1) {
+      return [true, portEquations[0]];
+    } else {
+      return [
+        true,
+        {
+          operator: Infinity,
+          value: portEquations.map(function(equation) {
+            return equation.value;
+          }).join(' = '),
+        },
+      ];
+    }
+  }
+
+  const visitString = function(f) {
+    return function(a) {
+      const result = visit(f, a);
+      switch (result[0]) {
+        case true:
+          return result[1]['value'];
+        default:
+          return '';
+      }
+    };
+  };
+
+  return {
+    node: visitString(nodeVisit),
+    port: visitString(portVisit),
+    edge: visitString(edgeVisit),
+  };
 }
 
 function edgeOver(e, d, i) {
-  edgeToggle(d, true);
-  update(); // flush to DOM
-  equation.text(d.equation); // Consider coercing null to empty string
+  const text = equationVisitors(true).edge(d);
+  if (text === undefined) {
+    equation.text('');
+  } else {
+    equation.text(text);
+  }
 }
 
 function edgeOut(e, d, i) {
-  equation.text("");
-  edgeToggle(d, false);
-  update(); // flush to DOM
+  equation.text('');
+  equationVisitors(false).edge(d);
+}
+
+function nodeOver(e, d, i) {
+  const text = equationVisitors(true).node(d);
+  if (text === undefined) {
+    equation.text('');
+  } else {
+    equation.text(text);
+  }
+}
+
+function nodeOut(e, d, i) {
+  equation.text('');
+  equationVisitors(false).node(d);
 }
 
 function linePosition(cursor, source, target) {
@@ -149,324 +365,344 @@ function curvePosition(cursor, center, radius) {
   const ratio = radius / distance;
   return [
     center[0] + cursorToCenter[0] * ratio,
-    center[1] + cursorToCenter[1] * ratio
+    center[1] + cursorToCenter[1] * ratio,
   ];
 }
 
-function createIter() {
-  var n = graph.availableIters.pop();
-  if (n == null) {
-    n = graph.nextIter;
-    graph.nextIter += 1;
-  }
-  return n;
+function updateEdgePath(pathSelection) {
+  return pathSelection
+      .attr('d', function(d) {
+        const sourcePort = env[d['portIds'][0]];
+        const targetPort = env[d['portIds'][1]];
+        const sourceNode = env[sourcePort['nodeId']];
+        const targetNode = env[targetPort['nodeId']];
+
+        const path = d3.path();
+        path.moveTo(
+            sourceNode.point[0],
+            sourceNode.point[1],
+        );
+        path.bezierCurveTo(
+            sourceNode.point[0] + sourcePort.point[0],
+            sourceNode.point[1] + sourcePort.point[1],
+            targetNode.point[0] + targetPort.point[0],
+            targetNode.point[1] + targetPort.point[1],
+            targetNode.point[0],
+            targetNode.point[1],
+        );
+        return path.toString();
+      });
 }
 
-// TODO: push in sorted order for better experience
-function destroyIter(n) {
-  graph.availableIters.push(n);
-}
-
-function edgeClick(e, d, i) {
-  edgeOut(e, d, i);
-
-  const cursor = [e.offsetX / spacing, e.offsetY / spacing]
-
-  var point;
-  if (d.center != null) {
-    point = curvePosition(cursor, d.center, d.radius);
-  } else {
-    point = linePosition(cursor, d.source, d.target);
-  }
-
-  graph.nodes.push({
-    id: point,
-    iter: createIter()
-  });
-
-  // d3.select(this).exit()
-
-  for (var i = graph.edges.length - 1; i >= 0; i--) {
-    const edge = graph.edges[i];
-    if (pointId(edge.source) == pointId(d.source) && pointId(edge.target) == pointId(d.target)) {
-      graph.edges.splice(i, 1);
-    }
-  }
-
-  graph.edges.push({
-    source: d.source,
-    target: point,
-    center: d.center,
-    radius: d.radius,
-  });
-
-  graph.edges.push({
-    source: point,
-    target: d.target,
-    center: d.center,
-    radius: d.radius,
-  });
-
-  update();
+function updateEdgeStroke(pathSelection) {
+  return pathSelection
+      .attr('stroke', function(d) {
+        if (d.selected) {
+          return '#FFC3BF';
+        } else {
+          return '#FF928B';
+        }
+      });
 }
 
 function enterEdge(selection) {
-  return selection
-    .insert("path", ":first-child")
-    .attr("class", "edge")
-    .attr("d", function(d) {
-      if (d.center != null) {
-        const radius = d.radius;
-        const sourceAngle = Math.atan2(d.source[1] - d.center[1], d.source[0] - d.center[0]);
-        var targetAngle;
-        if (pointId(d.source) == pointId(d.target)) {
-          targetAngle = sourceAngle + (2 * Math.PI);
-        } else {
-          targetAngle = Math.atan2(d.target[1] - d.center[1], d.target[0] - d.center[0]);
-        }
+  const pathSelection = selection.append('path');
 
-        const path = d3.path();
-        path.arc(
-          d.center[0] * spacing,
-          d.center[1] * spacing,
-          radius * spacing,
-          sourceAngle,
-          targetAngle
-        );
-        return path.toString();
-      } else {
-        const sx = (d.source[0] * spacing).toString();
-        const sy = (d.source[1] * spacing).toString();
-        const tx = (d.target[0] * spacing).toString();
-        const ty = (d.target[1] * spacing).toString();
-        return "M " + sx + " " + sy + " L " + tx + " " + ty;
-      }
-    })
-    .attr("fill", "none")
-    .attr("stroke-width", thickness)
-    .attr("stroke", function(d) {
-      if (d.selected) {
-        return "#FFC3BF";
-      } else {
-        return "#FF928B";
-      }
-    })
-    .on("mouseover", edgeOver)
-    .on("mouseout", edgeOut)
-    .on("click", edgeClick);
+  pathSelection
+      .attr('id', (d) => 'UUID-' + d.id)
+      .attr('class', 'edge')
+      .attr('fill', 'none')
+      .attr('pointer-events', 'stroke')
+      .attr('stroke-width', thickness);
+
+  updateEdgePath(pathSelection);
+  updateEdgeStroke(pathSelection);
+
+  return pathSelection
+      .on('mouseover', edgeOver)
+      .on('mouseout', edgeOut);
 }
 
-function updateEdge(selection) {
-  return selection
-   .attr("stroke", function(d) {
-      if (d.selected) {
-        return "#FFC3BF";
-      } else {
-        return "#FF928B";
-      }
-   });
+function updateEdge(pathSelection) {
+  updateEdgeStroke(pathSelection);
+
+  return pathSelection;
 }
 
-function enterNode(enter) {
-  const group = enter.append("g")
-    .attr("class", "node")
-    .attr("transform", function(d) {
-      return "translate(" + d.id[0] * spacing + "," + d.id[1] * spacing + ")";
-    })
-    .on("mouseover", nodeOver)
-    .on("mouseout", nodeOut)
-    .on("click", nodeClick);
-
-  group.append("circle")
-    .attr("class", "nodeCircle")
-    .attr("r", thickness * 2)
-    .style("fill", function(d) {
-      if (d.operator) {
-        if (d.selected) {
-          return "#FFC3BF";
-        } else {
-          return "#FF928B";
-        }
-      } else {
-        if (pointId(d.id) === graph.clickedNode) {
-          return "#DFFFD1";
-        } else {
-          return "#CDEAC0";
-        }
-      }
-    });
-
-  group.append("text")
-    .text(function (d) {
-      if (d.value != null) {
-        return d.value.toString();
-      } else if (d.iter != null) {
-        return String.fromCharCode(97 + d.iter);
-      } else {
-        return d.name;
-      }
-    })
-    .style("font-family", "Roboto Mono, sans-serif")
-    .style("font-weight", "bold")
-    .style("text-anchor", "middle")
-    .style("dominant-baseline", "middle");
-
-  return group;
+// https://stackoverflow.com/questions/28102089/simple-graph-of-nodes-and-links-without-using-force-layout
+function dragStarted(groupSelection) {
+  // d3.select(this).raise(); draws on top of other elements
+  groupSelection.attr('cursor', 'grabbing');
 }
 
-function updateNode(selection) {
-  selection.select("circle")
-    .style("fill", function(d) {
-      if (d.operator) {
-        if (d.selected) {
-          return "#FFC3BF";
-        } else {
-          return "#FF928B";
-        }
-      } else {
-        if (pointId(d.id) === graph.clickedNode) {
-          return "#DFFFD1";
-        } else {
-          return "#CDEAC0";
-        }
-      }
-    });
-
-  return selection;
-}
-
-function update() {
-  image
-    .selectAll(".edge")
-    .data(graph.edges, edgeId)
-    .join(enterEdge, updateEdge);
-
-  image
-    .selectAll(".node")
-    .data(graph.nodes, nodeId)
-    .join(enterNode, updateNode);
-}
-
-function nodeOver(e, d) {
-  d.value += 1;
+function portDragged(event, d) {
+  d.point = [event.x, event.y];
 
   d3.select(this)
-    .select("circle")
-    .transition()
-    .duration(2000)
-    .attr("r", thickness * 4)
+      .attr('cx', d.point[0])
+      .attr('cy', d.point[1]);
+
+  const includePortId = function(edge) {
+    return Array.from(objectIterable(edge, 'portIds')).includes(d.id);
+  };
+
+  updateEdgePath(d3.selectAll('.edge').filter(includePortId));
 }
 
-function nodeOut(e, d) {
-  d3.selectAll(".nodeCircle")
-    .transition()
-    .duration(1000)
-    .attr("r", thickness * 2);
+function nodeDragged(event, d) {
+  d.point = [event.x, event.y];
+
+  d3.select(this)
+      .attr('transform', 'translate(' + d.point[0] + ',' + d.point[1] + ')');
+
+  const nodePortIds = Array.from(objectIterable(d, 'portIds'));
+
+  const includePortId = function(edge) {
+    const edgePortIds = Array.from(objectIterable(edge, 'portIds'));
+
+    for (const edgePortId of edgePortIds) {
+      for (const nodePortId of nodePortIds) {
+        if (edgePortId === nodePortId) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  };
+
+  updateEdgePath(d3.selectAll('.edge').filter(includePortId));
+}
+
+function dragEnded(groupSelection) {
+  groupSelection.attr('cursor', 'grab');
+}
+
+function updatePortFill(circleSelection) {
+  circleSelection
+      .style('fill', function(d) {
+        if (d.id === clickedPortId) {
+          return '#DFFFD1';
+        } else {
+          return '#CDEAC0';
+        }
+      });
+
+  return circleSelection;
+}
+
+function updatePortVisible(circleSelection) {
+  circleSelection
+      .style('display', function(d) {
+        return d.nodeId === clickedNodeId ? 'block' : 'none';
+      });
+
+  return circleSelection;
+}
+
+function enterPort(groupSelection) {
+  const circleSelection = groupSelection.append('circle');
+
+  circleSelection
+      .attr('id', (d) => 'UUID-' + d.id)
+      .attr('class', 'port')
+      .attr('r', thickness)
+      .attr('cx', (d) => d.point[0])
+      .attr('cy', (d) => d.point[1])
+      .style('stroke-width', 0)
+      .call(d3.drag().on('drag', portDragged));
+
+  updatePortFill(circleSelection);
+  updatePortVisible(circleSelection);
+
+  return circleSelection;
+}
+
+function updatePort(circleSelection) {
+  updatePortFill(circleSelection);
+  updatePortVisible(circleSelection);
+
+  return circleSelection;
 }
 
 function nodeClick(e, d) {
-  const id = pointId(d.id)
-  if (graph.clickedNode === id) {
-    // this deletes the DOM element but not the data
-    // d3.select(this).remove();
+  clickedNodeId = d.id;
 
-    for (var i = graph.nodes.length - 1; i >= 0; i--) {
-      const node = graph.nodes[i];
-      if (pointId(node.id) == id) {
-        if (node.iter != null) {
-          destroyIter(node.iter)
-        }
-        graph.nodes.splice(i, 1);
-      }
-    }
-  } else {
-    graph.clickedNode = pointId(d.id);
-  }
-  update();
+  updatePortVisible(d3.select(this).selectAll('.port'));
 
   e.stopPropagation();
 }
 
-function selectGraph(edgesName, nodesName) {
-  const selectedEdges = graphs.find(function(e) { return e.name == edgesName });
+function updateNodeFill(circleSelection) {
+  circleSelection
+      .style('fill', function(d) {
+        if ('name' in d) {
+          if (d.id === clickedNodeId) {
+            return '#DFFFD1';
+          } else {
+            return '#CDEAC0';
+          }
+        } else {
+          if (d.selected) {
+            return '#FFC3BF';
+          } else {
+            return '#FF928B';
+          }
+        }
+      });
 
-  let edges;
-  if (selectedEdges) {
-    edges = selectedEdges;
-  } else {
-    edges = graphs[0];
-  }
-
-  const selectedNodes = Object.entries(edges.nodes).find(function(n) { return n[0] == nodesName });
-
-  let nodes;
-  if (selectedNodes) {
-    nodes = selectedNodes[1];
-  } else {
-    nodes = Object.entries(edges.nodes)[0][1];
-  }
-
-  // Graph is mutable
-  // Node and edge array is mutable
-  // Nodes and edges are immutable
-  graph = {
-    nodes: [],
-    edges: [],
-    nextIter: 0,
-    availableIters: [],
-  }
-
-  nodes.forEach(function(node) {
-    const n = Object.assign({}, node);
-    if (n.name == null) {
-      n.iter = createIter();
-    }
-    graph.nodes.push(n);
-  });
-  edges.edges.forEach(edge => graph.edges.push(Object.assign({}, edge)));
+  return circleSelection;
 }
 
-const graphSelect = d3.select("#graphSelect")
+function enterNode(selection) {
+  const groupSelection = selection.append('g')
+      .attr('id', (d) => 'UUID-' + d.id)
+      .attr('class', 'node')
+      .attr('transform', function(d) {
+        return 'translate(' + d.point[0] + ',' + d.point[1] + ')';
+      })
+      .on('mouseover', nodeOver)
+      .on('mouseout', nodeOut)
+      .on('click', nodeClick);
+
+  groupSelection.call(d3.drag()
+      .on('start', dragStarted(groupSelection))
+      .on('drag', nodeDragged)
+      .on('end', dragEnded(groupSelection)));
+
+  const circleSelection = groupSelection.append('circle')
+      .attr('class', 'nodeCircle')
+      .attr('r', thickness * 2)
+      .style('stroke-width', 0);
+
+  updateNodeFill(circleSelection);
+
+  groupSelection.append('text')
+      .text(function(d) {
+        if (d.value != null) {
+          return d.value.toString();
+        } else if ('operator' in d) {
+          return hyperlogarithmicOperations[d.operator].commutation.symbol;
+        } else {
+          return d.name;
+        }
+      })
+      .style('font-family', 'Roboto Mono, sans-serif')
+      .style('font-weight', 'bold')
+      .style('font-size', '0.25px')
+      .style('text-anchor', 'middle')
+      .style('dominant-baseline', 'middle');
+
+  groupSelection.selectAll('.port')
+      .data(function(node) {
+        return Array.from(
+            envObjectsByIdsIterable(node, 'portIds'),
+        );
+      }, (d) => d.id)
+      .join(enterPort, updatePort);
+
+  return groupSelection;
+}
+
+function updateNode(groupSelection) {
+  return updateNodeFill(groupSelection.select('.nodeCircle'));
+}
+
+function update() {
+  equation.text('');
+
+  image
+      .selectAll('.edge')
+      .data(Object.entries(env).filter((a) => a[1].type == 'edge').map((a) => a[1]), (edge) => edge.id)
+      .join(enterEdge, updateEdge);
+
+  image
+      .selectAll('.node')
+      .data(Object.entries(env).filter((a) => a[1].type == 'node').map((a) => a[1]), (node) => node.id)
+      .join(enterNode, updateNode);
+}
+
+function selectGraph(outerId, innerId) {
+  const outer = graphs[outerId];
+  const inner = outer[innerId];
+
+  env = {};
+  envObjectsByIdsIterable = objectsByIdsIterable(env);
+  clickedEdgeId = null;
+  clickedPortId = null;
+  clickedNodeId = null;
+
+  const edges = {};
+  for (const nodeData of inner) {
+    const node = Object.assign({}, nodeData);
+    delete node['ports'];
+
+    node.id = crypto.randomUUID();
+    node.type = 'node';
+
+    env[node.id] = node;
+
+    for (const portData of objectIterable(nodeData, 'ports')) {
+      const port = Object.assign({}, portData);
+      delete port['edgeIds'];
+
+      port.id = crypto.randomUUID();
+      port.type = 'port';
+
+      env[port.id] = port;
+
+      for (const edgeData of objectIterable(portData, 'edgeIds')) {
+        let edge;
+        if (edgeData in edges) {
+          edge = edges[edgeData];
+        } else {
+          edge = {};
+          edge.id = crypto.randomUUID();
+          edge.type = 'edge';
+          edges[edgeData] = edge;
+
+          env[edge.id] = edge;
+        }
+        addToArray('portIds')(edge, port.id);
+        addToArray('edgeIds')(port, edge.id);
+      }
+
+      port['nodeId'] = node.id;
+      addToArray('portIds')(node, port.id);
+    }
+  };
+}
+
+const graphSelect = d3.select('#graphSelect');
 
 const optgroups = graphSelect
-  .selectAll("optgroup")
-  .data(graphs)
-  .join((enter) => enter
-    .append("optgroup")
-    .attr("label", graphId) // graph identifier
-  );
-
-optgroups.each(function (graph) {
-  d3.select(this)
-    .selectAll('option')
-    .data(Object.keys(graph.nodes))
+    .selectAll('optgroup')
+    .data(Object.entries(graphs))
     .join((enter) => enter
-      .append("option")
-      .text(nodeId => nodeId)
-      .attr("value", nodeId => JSON.stringify([graph.name, nodeId]))
+        .append('optgroup')
+        .attr('label', (outerPair) => outerPair[0]),
     );
+
+optgroups.each(function(outerPair) {
+  d3.select(this)
+      .selectAll('option')
+      .data(Object.keys(outerPair[1]))
+      .join((enter) => enter
+          .append('option')
+          .text((innerId) => innerId)
+          .attr('value', (innerId) => JSON.stringify([outerPair[0], innerId])),
+      );
 });
 
 graphSelect
-  .on("change", function() {
-    const selectedOption = d3.select(this).property("value");
+    .on('change', function() {
+      const selectedOption = d3.select(this).property('value');
 
-    const [graphId, nodeId] = JSON.parse(selectedOption);
+      const [outerId, innerId] = JSON.parse(selectedOption);
 
-    // Hack - updating nodes in place is currently broken
-    // TODO: give all elements unique ids
-    graph.nodes = [];
-    graph.edges = [];
-    graph.nextIter = 0;
-    graph.availableIters = [];
-    graph.clickedNode = null;
+      selectGraph(outerId, innerId);
+      update();
+    });
 
-    update();
-
-    equation.text("");
-    selectGraph(graphId, nodeId);
-    update();
-  });
-
-selectGraph(null, null);
+selectGraph('one', 'identity');
 update();
