@@ -13,6 +13,10 @@ import {
 
   repair,
   delete_objects,
+
+  iterable_map,
+  object_iterable,
+  objects_by_ids_iterable,
 } from '../struct.js';
 
 import assert from 'assert';
@@ -156,5 +160,66 @@ describe('#repair', () => {
     ];
 
     assert.deepEqual(env, expected);
+  });
+});
+
+describe('#iterable_map', () => {
+  it('maps lazily', () => {
+    const result_then_error = function() {
+      let complete = false;
+
+      return {
+        [Symbol.iterator]: function() {
+          return {
+            next: () => {
+              if (complete) {
+                throw new Error('You get one phone call');
+              } else {
+                complete = true;
+                return {value: 0, done: false};
+              }
+            },
+          };
+        },
+      };
+    };
+
+    const iterator = iterable_map(result_then_error(), (i) => i + 1);
+
+    assert.equal(iterator[Symbol.iterator]().next().value, 1);
+  });
+});
+
+describe('#object_iterable', () => {
+  it('iterates when present', () => {
+    const object = {a: [1, 2, 3]};
+    const iterator = object_iterable(object, 'a');
+
+    assert.deepEqual(new Array(...iterator), [1, 2, 3]);
+  });
+
+  it('iterates when missing', () => {
+    const object = {};
+    const iterator = object_iterable(object, 'a');
+
+    assert.deepEqual(new Array(...iterator), []);
+  });
+});
+
+describe('#objects_by_ids_iterable', () => {
+  it('iterates', () => {
+    const env = [
+      {
+        ids: [2, 1],
+      },
+      {
+        ids: [2],
+      },
+      {
+        foo: 'bar',
+      },
+    ];
+
+    assert.deepEqual(new Array(...objects_by_ids_iterable(env)(env[0], 'ids')), [env[2], env[1]]);
   });
 });

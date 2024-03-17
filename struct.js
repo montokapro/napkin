@@ -174,6 +174,53 @@ const delete_objects = function(env) {
   }
 };
 
+const iterable_map = function(iterable, f) {
+  const iterator = iterable[Symbol.iterator]();
+
+  return {
+    [Symbol.iterator]: function() {
+      return {
+        next: () => {
+          const next = iterator.next();
+          if (next.done) {
+            return {done: next.done};
+          } else {
+            return {value: f(next.value), done: next.done};
+          }
+        },
+      };
+    },
+  };
+};
+
+const object_iterable = function(object, iterable_name) {
+  if (iterable_name in object) {
+    return object[iterable_name];
+  } else {
+    return {
+      [Symbol.iterator]: function() {
+        return {
+          next: () => {
+            return {done: true};
+          },
+        };
+      },
+    };
+  };
+};
+
+const objects_by_ids_iterable = function(env) {
+  return function(object, iterable_name) {
+    return iterable_map(
+        object_iterable(
+            object,
+            iterable_name,
+        ),
+        (id) => env[id],
+    );
+  };
+};
+
 export {
   add_to_set, add_to_array, add_to_env,
   remove_from_set, remove_from_array, remove_from_env,
@@ -189,4 +236,8 @@ export {
 
   repair,
   delete_objects,
+
+  iterable_map,
+  object_iterable,
+  objects_by_ids_iterable,
 };
