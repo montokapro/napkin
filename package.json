@@ -12,7 +12,15 @@
   "author": "",
   "license": "CC0-1.0",
   "devDependencies": {
+    "eslint": "^8.56.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-n": "^16.6.2",
+    "eslint-plugin-promise": "^6.1.1",
     "mocha": "^10.2.0"
   },
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "eslint-config-google": "^0.14.0",
+    "http-server": "^14.1.1"
+  }
 }
