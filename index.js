@@ -64,7 +64,7 @@ function equationVisitors(selected) {
         true,
         {
           operator: Infinity,
-          value: a['name'],
+          name: a['name'],
         },
       ];
     }
@@ -108,8 +108,8 @@ function equationVisitors(selected) {
         true,
         {
           operator: -Infinity,
-          value: portEquations.map(function(equation) {
-            return equation.value;
+          name: portEquations.map(function(equation) {
+            return equation.name;
           }).join(' = '),
         },
       ];
@@ -164,7 +164,7 @@ function equationVisitors(selected) {
           true,
           {
             operator: Infinity,
-            value: prettyNumber(operation.identity),
+            name: prettyNumber(operation.identity),
           },
         ];
       }
@@ -179,11 +179,11 @@ function equationVisitors(selected) {
         true,
         {
           operator: node.operator,
-          value: edgeEquations.map(function(equation) {
+          name: edgeEquations.map(function(equation) {
             if (equation.operator < node.operator) {
-              return '(' + equation.value + ')';
+              return '(' + equation.name + ')';
             } else {
-              return equation.value;
+              return equation.name;
             }
           }).join(' ' + commutationSymbol + ' '),
         },
@@ -215,12 +215,12 @@ function equationVisitors(selected) {
         true,
         {
           operator: node.operator,
-          value: [nodeEquation, edgeEquation]
+          name: [nodeEquation, edgeEquation]
               .map(function(equation) {
                 if (equation.operator < node.operator) {
-                  return '(' + equation.value + ')';
+                  return '(' + equation.name + ')';
                 } else {
-                  return equation.value;
+                  return equation.name;
                 }
               })
               .join(' ' + reversionSymbol + ' '),
@@ -254,8 +254,8 @@ function equationVisitors(selected) {
         true,
         {
           operator: Infinity,
-          value: portEquations.map(function(equation) {
-            return equation.value;
+          name: portEquations.map(function(equation) {
+            return equation.name;
           }).join(' = '),
         },
       ];
@@ -267,7 +267,7 @@ function equationVisitors(selected) {
       const result = visit(f, a);
       switch (result[0]) {
         case true:
-          return result[1]['value'];
+          return result[1]['name'];
         default:
           return '';
       }
