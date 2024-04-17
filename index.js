@@ -11,8 +11,6 @@ import {
   objects_by_ids_iterable as objectsByIdsIterable,
 } from './struct.js';
 
-const width = 1024;
-const height = 1024;
 const thickness = 1 / 8;
 const scale = 128;
 
@@ -45,8 +43,8 @@ const zoom = d3.zoom()
 // https://www.d3indepth.com/zoom-and-pan/
 const svg = display
     .append('svg')
-    .attr('width', width)
-    .attr('height', height)
+    .attr('width', '100vw')
+    .attr('height', '100vh')
     .call(zoom)
     .call(zoom.transform, d3.zoomIdentity.scale(scale))
     .on('click', graphClick);
