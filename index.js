@@ -2,7 +2,6 @@
 
 import {graphs} from './graphs.js';
 import {hyperlogarithmicOperations} from './operations.js';
-import {centerPoint, targetSlope} from './geometry.js';
 import {
   add_to_array as addToArray,
   remove_from_array as removeFromArray,
@@ -66,20 +65,6 @@ const image = svg
 
 function equationVisitors(selected) {
   const visits = {};
-
-  const nameElse = function(f, a) {
-    if ('name' in a) {
-      return [
-        true,
-        {
-          operator: Infinity,
-          value: a['name'],
-        },
-      ];
-    } else {
-      return f(a);
-    }
-  };
 
   const visit = function(f, a) {
     if ('name' in a) {
