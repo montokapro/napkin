@@ -1,12 +1,12 @@
 function centerPoint(sourcePoint, sourceSlope, targetPoint) {
   const sumPoint = [
     (sourcePoint[0] + targetPoint[0]),
-    (sourcePoint[1] + targetPoint[1])
+    (sourcePoint[1] + targetPoint[1]),
   ];
 
   const midPoint = [
     sumPoint[0] / 2,
-    sumPoint[1] / 2
+    sumPoint[1] / 2,
   ];
 
   const midSlope = (midPoint[1] - sourcePoint[1]) / (midPoint[0] - sourcePoint[0]);
@@ -21,12 +21,12 @@ function centerPoint(sourcePoint, sourceSlope, targetPoint) {
   if (!isFinite(sourceTangentSlope)) { // vertical
     return [
       sourcePoint[0],
-      midTangentSlope * sourcePoint[0] + (midPoint[1] - midTangentSlope * midPoint[0])
+      midTangentSlope * sourcePoint[0] + (midPoint[1] - midTangentSlope * midPoint[0]),
     ];
   } else if (!isFinite(midTangentSlope)) { // vertical
     return [
       midPoint[0],
-      sourceTangentSlope * midPoint[0] + (sourcePoint[1] - sourceTangentSlope * sourcePoint[0])
+      sourceTangentSlope * midPoint[0] + (sourcePoint[1] - sourceTangentSlope * sourcePoint[0]),
     ];
   } else {
     // y-intercepts
@@ -46,4 +46,4 @@ function targetSlope(centerPoint, targetPoint) {
   return -1 / targetTangentSlope;
 }
 
-export { centerPoint, targetSlope };
+export {centerPoint, targetSlope};

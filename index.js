@@ -49,12 +49,6 @@ const svg = display
     .call(zoom.transform, d3.zoomIdentity.scale(scale))
     .on('click', graphClick);
 
-const background = svg
-    .append('rect')
-    .attr('width', '100%')
-    .attr('height', '100%')
-    .style('fill', 'none');
-
 const image = svg
     .append('g')
     .attr('id', 'image')

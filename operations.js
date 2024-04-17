@@ -94,4 +94,4 @@ const hyperlogarithmicOperations = [
   },
 ];
 
-export { hyperlogarithmicOperations };
+export {hyperlogarithmicOperations};

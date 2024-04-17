@@ -2,22 +2,30 @@ const identities = [
   -Infinity,
   0,
   1,
-  Math.E
+  Math.E,
 ];
 
 const commutations = {
   'TODO': undefined,
-  '+': (a, b) => { return a + b; },
-  '*': (a, b) => { return a * b; },
-  'TODO2': undefined
-}
+  '+': (a, b) => {
+    return a + b;
+  },
+  '*': (a, b) => {
+    return a * b;
+  },
+  'TODO2': undefined,
+};
 
 const reversions = {
   'TODO': undefined,
-  '-': (a, b) => { return a - b; },
-  '/': (a, b) => { return a / b; },
-  'TODO2': undefined
-}
+  '-': (a, b) => {
+    return a - b;
+  },
+  '/': (a, b) => {
+    return a / b;
+  },
+  'TODO2': undefined,
+};
 
 function evaluate(env, node) {
   const zero = identities[node.operator - 1];
@@ -25,28 +33,28 @@ function evaluate(env, node) {
   const times = Object.values(commutations)[node.operator];
   const divides = Object.values(reversions)[node.operator];
 
-  const f = values => {
+  const f = (values) => {
     const unit = {
       value: one, // aggregate
-      indices: [] // indices of incomplete elements
+      indices: [], // indices of incomplete elements
     };
 
     return values.reduce(
-      (a, i) => {
-        const value = env[i];
-        if (value == null) {
-          return {
-            value: a.value,
-            indices: a.indices.concat([i])
-          };
-        } else {
-          return {
-            value: times(a.value, value),
-            indices: a.indices
-          };
-        }
-      },
-      unit
+        (a, i) => {
+          const value = env[i];
+          if (value == null) {
+            return {
+              value: a.value,
+              indices: a.indices.concat([i]),
+            };
+          } else {
+            return {
+              value: times(a.value, value),
+              indices: a.indices,
+            };
+          }
+        },
+        unit,
     );
   };
 
@@ -63,7 +71,7 @@ function evaluate(env, node) {
           return {};
         } else {
           const h = {};
-          h[left.indices[0]] = divides(right.value, left.value)
+          h[left.indices[0]] = divides(right.value, left.value);
           return h;
         }
       }
@@ -84,7 +92,7 @@ function evaluate(env, node) {
     return right;
   }
 
-  return { ...left, ...right };
+  return {...left, ...right};
 }
 
-export { evaluate };
+export {evaluate};
