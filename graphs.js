@@ -228,6 +228,9 @@ const graphs = {
       {
         point: [1, 2],
         name: '3',
+        value: {
+          float: 3,
+        },
         ports: [
           {
             point: [1, 0],
@@ -252,6 +255,9 @@ const graphs = {
       {
         point: [3, 2],
         name: '2',
+        value: {
+          float: 2,
+        },
         ports: [
           {
             point: [-1, 0],
@@ -431,7 +437,9 @@ const graphs = {
       {
         point: [1, 1],
         name: '9',
-        value: 9,
+        value: {
+          float: 9,
+        },
         ports: [
           {
             point: [1, 0],
@@ -466,7 +474,9 @@ const graphs = {
       {
         point: [1, 3],
         name: '5',
-        value: 5,
+        value: {
+          float: 5,
+        },
         ports: [
           {
             point: [1, 0],
@@ -501,7 +511,9 @@ const graphs = {
       {
         point: [2, 4],
         name: '32',
-        value: 32,
+        value: {
+          float: 32,
+        },
         ports: [
           {
             point: [0, -1],
@@ -525,6 +537,32 @@ const graphs = {
         ports: [
           {
             point: [1, 0],
+          },
+        ],
+      },
+    ],
+    edge: [
+      {
+        point: [1, 1],
+        value: {
+          float: 2,
+        },
+        ports: [
+          {
+            point: [1, 0],
+            edgeIds: [0],
+          },
+        ],
+      },
+      {
+        point: [1, 3],
+        value: {
+          float: 3,
+        },
+        ports: [
+          {
+            point: [-1, 0],
+            edgeIds: [0],
           },
         ],
       },

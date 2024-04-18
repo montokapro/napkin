@@ -21,7 +21,7 @@ let clickedPortId;
 let clickedNodeId;
 
 const equation = d3.select('#equation');
-
+const calculation = d3.select('#calculation');
 const display = d3.select('#display');
 
 function graphClick() {
@@ -54,6 +54,171 @@ const image = svg
     .attr('id', 'image')
     .attr('transform', 'scale(' + scale + ')')
     .style('pointer-events', 'all');
+
+function valueVisitors() {
+  const visit = function(f, a) {
+    if ('value' in a) {
+      return a.value;
+    } else {
+      a.value = undefined; // visiting
+      a.value = f(a);
+      console.log(a.type);
+      console.log(a.value);
+      return a.value;
+    }
+  };
+
+  function nodeVisit(node) {
+    const portValues = [];
+    for (const port of envObjectsByIdsIterable(node, 'portIds')) {
+      const portResult = visit(portVisit, port);
+      if (portResult !== undefined) {
+        if (portResult.float !== undefined) {
+          portValues.push(portResult);
+        } else {
+          return portResult;
+        }
+      }
+    }
+
+    if (portValues.length === 0) {
+      return {float: undefined};
+    } else if (portValues.length === 1) {
+      return portValues[0];
+    } else {
+      // consider validating equality
+      return portValues[0];
+    }
+  }
+
+  const prettyNumber = function(number) {
+    switch (number) {
+      case -Infinity:
+        return '-∞';
+      case Infinity:
+        return '∞';
+      default:
+        return number;
+    }
+  };
+
+  function portVisit(port) {
+    const node = env[port.nodeId];
+
+    let operation;
+    if ('operator in node') {
+      operation = hyperlogarithmicOperations[node.operator];
+    }
+
+    let visitingPort = false;
+    const edgeValues = [];
+    for (const edge of envObjectsByIdsIterable(port, 'edgeIds')) {
+      const edgeResult = visit(edgeVisit, edge);
+      if (edgeResult !== undefined) {
+        if (edgeResult.float !== undefined) {
+          edgeValues.push(edgeResult);
+        } else {
+          return edgeResult;
+        }
+      } else {
+        visitingPort = true;
+      }
+    }
+
+    let edgeResult;
+    if (edgeValues.length === 0) {
+      if (visitingPort || operation === undefined) {
+        edgeResult = {float: undefined};
+      } else {
+        edgeResult = {
+          float: operation.identity,
+        };
+      }
+    } else if (edgeValues.length === 1) {
+      edgeResult = edgeValues[0];
+    } else {
+      const commutationSymbol = '=';
+      if (operation !== undefined) {
+        edgeResult = edgeValues.reduce(
+            operation.commutation.operation,
+            operation.identity,
+        );
+      } else {
+        edgeResult = edgeValues[0];
+      }
+    }
+
+    const nodeResult = visit(nodeVisit, node);
+
+    if (nodeResult === undefined) {
+      return edgeResult;
+    }
+
+    if (nodeResult.float === undefined) {
+      return nodeResult;
+    }
+
+    if (operation === undefined) {
+      return nodeResult;
+    }
+
+    if (edgeResult === undefined) {
+      return nodeResult;
+    }
+
+    return {
+      float: operation.reversion.operation(
+          nodeResult.float,
+          edgeResult.float,
+      ),
+    };
+  }
+
+  function edgeVisit(edge) {
+    const portValues = [];
+    for (const port of envObjectsByIdsIterable(edge, 'portIds')) {
+      const portResult = visit(portVisit, port);
+      if (portResult !== undefined) {
+        if (portResult.float !== undefined) {
+          portValues.push(portResult);
+        } else {
+          return portResult;
+        }
+      }
+    }
+
+    if (portValues.length === 0) {
+      return {float: undefined};
+    } else if (portValues.length === 1) {
+      return portValues[0];
+    } else {
+      // consider validating equality
+      return portValues[0];
+    }
+  }
+
+  const visitString = function(f) {
+    return function(a) {
+      const result = visit(f, a);
+
+      if (result === undefined) {
+        return '';
+      }
+
+      if (result.float === undefined) {
+        return '';
+      }
+
+      return result.float;
+    };
+  };
+
+  return {
+    node: visitString(nodeVisit),
+    port: visitString(portVisit),
+    edge: visitString(edgeVisit),
+  };
+}
 
 function equationVisitors(selected) {
   const visits = {};
@@ -288,23 +453,28 @@ function edgeOver(e, d, i) {
   } else {
     equation.text(text);
   }
+  calculation.text(valueVisitors().edge(d));
 }
 
 function edgeOut(e, d, i) {
+  calculation.text('');
   equation.text('');
   equationVisitors(false).edge(d);
 }
 
 function nodeOver(e, d, i) {
+  valueVisitors().node(d);
   const text = equationVisitors(true).node(d);
   if (text === undefined) {
     equation.text('');
   } else {
     equation.text(text);
   }
+  calculation.text(valueVisitors().node(d));
 }
 
 function nodeOut(e, d, i) {
+  calculation.text('');
   equation.text('');
   equationVisitors(false).node(d);
 }
@@ -556,9 +726,10 @@ function enterNode(selection) {
 
   groupSelection.append('text')
       .text(function(d) {
-        if (d.value != null) {
-          return d.value.toString();
-        } else if ('operator' in d) {
+        // if (d.value != null) {
+        //   return d.value.toString();
+        // } else
+        if ('operator' in d) {
           return hyperlogarithmicOperations[d.operator].commutation.symbol;
         } else {
           return d.name;
@@ -587,6 +758,7 @@ function updateNode(groupSelection) {
 
 function update() {
   equation.text('');
+  calculation.text('foo');
 
   image
       .selectAll('.edge')
