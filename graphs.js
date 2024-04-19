@@ -279,6 +279,9 @@ const graphs = {
       {
         point: [1, 2],
         name: '3',
+        value: {
+          float: 3,
+        },
         ports: [
           {
             point: [1, 0],
@@ -303,6 +306,9 @@ const graphs = {
       {
         point: [3, 2],
         name: '2',
+        value: {
+          float: 2,
+        },
         ports: [
           {
             point: [-1, 0],
@@ -555,7 +561,7 @@ const graphs = {
         ],
       },
       {
-        point: [1, 3],
+        point: [3, 1],
         value: {
           float: 3,
         },
