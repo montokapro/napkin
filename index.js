@@ -251,9 +251,6 @@ function equationVisitors(selected) {
   };
 
   function nodeVisit(node) {
-    node.selected = selected;
-    updateNodeFill(image.selectAll('#UUID-' + node.id).select('circle'));
-
     const portEquations = [];
     for (const port of envObjectsByIdsIterable(node, 'portIds')) {
       const portResult = visit(portVisit, port);
@@ -293,8 +290,6 @@ function equationVisitors(selected) {
   };
 
   function portVisit(port) {
-    port.selected = selected;
-
     const node = env[port.nodeId];
 
     let operation;
@@ -397,9 +392,6 @@ function equationVisitors(selected) {
   }
 
   function edgeVisit(edge) {
-    edge.selected = selected;
-    updateEdgeStroke(image.selectAll('#UUID-' + edge.id));
-
     const portEquations = [];
     for (const port of envObjectsByIdsIterable(edge, 'portIds')) {
       const portResult = visit(portVisit, port);
@@ -446,7 +438,64 @@ function equationVisitors(selected) {
   };
 }
 
+function selectVisitors(selected) {
+  const visits = {};
+
+  const visit = function(f) {
+    return function(a) {
+      if ('name' in a) {
+        return;
+      }
+
+      if (a.selected == selected) {
+        return;
+      }
+
+      f(a);
+    };
+  };
+
+  function nodeVisit(node) {
+    node.selected = selected;
+    updateNodeFill(image.selectAll('#UUID-' + node.id).select('circle'));
+
+    // concurrent visits
+    for (const port of envObjectsByIdsIterable(node, 'portIds')) {
+      visit(portVisit)(port);
+    }
+  }
+
+  function portVisit(port) {
+    port.selected = selected;
+
+    const node = env[port.nodeId];
+
+    // concurrent visits
+    for (const edge of envObjectsByIdsIterable(port, 'edgeIds')) {
+      visit(edgeVisit)(edge);
+    }
+    visit(nodeVisit)(node);
+  }
+
+  function edgeVisit(edge) {
+    edge.selected = selected;
+    updateEdgeStroke(image.selectAll('#UUID-' + edge.id));
+
+    // concurrent visits
+    for (const port of envObjectsByIdsIterable(edge, 'portIds')) {
+      visit(portVisit)(port);
+    }
+  }
+
+  return {
+    node: visit(nodeVisit),
+    port: visit(portVisit),
+    edge: visit(edgeVisit),
+  };
+}
+
 function edgeOver(e, d, i) {
+  selectVisitors(true).edge(d);
   const text = equationVisitors(true).edge(d);
   if (text === undefined) {
     equation.text('');
@@ -459,12 +508,13 @@ function edgeOver(e, d, i) {
 function edgeOut(e, d, i) {
   calculation.text('');
   equation.text('');
-  equationVisitors(false).edge(d);
+  equationVisitors().edge(d);
+  selectVisitors(false).edge(d);
 }
 
 function nodeOver(e, d, i) {
-  valueVisitors().node(d);
-  const text = equationVisitors(true).node(d);
+  selectVisitors(true).node(d);
+  const text = equationVisitors().node(d);
   if (text === undefined) {
     equation.text('');
   } else {
@@ -476,7 +526,8 @@ function nodeOver(e, d, i) {
 function nodeOut(e, d, i) {
   calculation.text('');
   equation.text('');
-  equationVisitors(false).node(d);
+  equationVisitors().node(d);
+  selectVisitors(false).node(d);
 }
 
 function linePosition(cursor, source, target) {
