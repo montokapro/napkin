@@ -29,7 +29,7 @@ function graphClick() {
   clickedNodeId = null;
   clickedPortId = null;
 
-  updatePortVisible(image.selectAll('.node').selectAll('.port'));
+  updatePortVisible(nodes.selectAll('.node').selectAll('.port'));
 }
 
 function handleZoom(e) {
@@ -54,6 +54,14 @@ const image = svg
     .attr('id', 'image')
     .attr('transform', 'scale(' + scale + ')')
     .style('pointer-events', 'all');
+
+const edges = image
+    .append('g')
+    .attr('id', 'edges');
+
+const nodes = image
+    .append('g')
+    .attr('id', 'nodes');
 
 function valueVisitors() {
   const visit = function(f, a) {
@@ -457,7 +465,7 @@ function selectVisitors(selected) {
 
   function nodeVisit(node) {
     node.selected = selected;
-    updateNodeFill(image.selectAll('#UUID-' + node.id).select('circle'));
+    updateNodeFill(nodes.selectAll('#UUID-' + node.id).select('circle'));
 
     // concurrent visits
     for (const port of envObjectsByIdsIterable(node, 'portIds')) {
@@ -479,7 +487,7 @@ function selectVisitors(selected) {
 
   function edgeVisit(edge) {
     edge.selected = selected;
-    updateEdgeStroke(image.selectAll('#UUID-' + edge.id));
+    updateEdgeStroke(edges.selectAll('#UUID-' + edge.id));
 
     // concurrent visits
     for (const port of envObjectsByIdsIterable(edge, 'portIds')) {
@@ -811,12 +819,12 @@ function update() {
   equation.text('');
   calculation.text('foo');
 
-  image
+  edges
       .selectAll('.edge')
       .data(Object.entries(env).filter((a) => a[1].type == 'edge').map((a) => a[1]), (edge) => edge.id)
       .join(enterEdge, updateEdge);
 
-  image
+  nodes
       .selectAll('.node')
       .data(Object.entries(env).filter((a) => a[1].type == 'node').map((a) => a[1]), (node) => node.id)
       .join(enterNode, updateNode);
