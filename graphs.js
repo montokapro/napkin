@@ -528,6 +528,151 @@ const graphs = {
         ],
       },
     ],
+    // 2x = 5 + y
+    // 2 = 3x + 4y
+    system: [
+      {
+        point: [1, 1],
+        name: '3',
+        float: 3,
+        ports: [
+          {
+            point: [1, 0],
+            edgeIds: [0],
+          },
+        ],
+      },
+      {
+        point: [3, 1],
+        name: 'x',
+        ports: [
+          {
+            point: [-1, 0],
+            edgeIds: [1],
+          },
+          {
+            point: [1, 0],
+            edgeIds: [3],
+          },
+        ],
+      },
+      {
+        point: [2, 2],
+        operator: 2,
+        ports: [
+          {
+            point: [0, -1],
+            edgeIds: [0, 1],
+          },
+          {
+            point: [0, 1],
+            edgeIds: [4],
+          },
+        ],
+      },
+      {
+        point: [5, 2],
+        operator: 2,
+        ports: [
+          {
+            point: [-1, 0],
+            edgeIds: [3, 5],
+          },
+          {
+            point: [1, 0],
+            edgeIds: [6],
+          },
+        ],
+      },
+      {
+        point: [3, 3],
+        name: '2',
+        float: 2,
+        value: {
+          float: 2,
+        },
+        ports: [
+          {
+            point: [-1, 0],
+            edgeIds: [4, 7],
+          },
+          {
+            point: [1, 0],
+            edgeIds: [5],
+          },
+        ],
+      },
+      {
+        point: [2, 4],
+        operator: 2,
+        ports: [
+          {
+            point: [0, -1],
+            edgeIds: [7],
+          },
+          {
+            point: [0, 1],
+            edgeIds: [8, 10],
+          },
+        ],
+      },
+      {
+        point: [6, 4],
+        operator: 1,
+        ports: [
+          {
+            point: [0, -1],
+            edgeIds: [6],
+          },
+          {
+            point: [0, 1],
+            edgeIds: [9, 11],
+          },
+        ],
+      },
+      {
+        point: [1, 5],
+        name: '4',
+        float: 4,
+        value: {
+          float: 4,
+        },
+        ports: [
+          {
+            point: [1, 0],
+            edgeIds: [8],
+          },
+        ],
+      },
+      {
+        point: [3, 5],
+        name: 'y',
+        ports: [
+          {
+            point: [-1, 0],
+            edgeIds: [10],
+          },
+          {
+            point: [1, 0],
+            edgeIds: [9],
+          },
+        ],
+      },
+      {
+        point: [7, 5],
+        name: '5',
+        float: 5,
+        value: {
+          float: 5,
+        },
+        ports: [
+          {
+            point: [-1, 0],
+            edgeIds: [11],
+          },
+        ],
+      },
+    ],
   },
   test: {
     node: [
