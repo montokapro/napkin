@@ -538,43 +538,6 @@ function nodeOut(e, d, i) {
   selectVisitors(false).node(d);
 }
 
-function linePosition(cursor, source, target) {
-  const targetToSource = [
-    target[0] - source[0],
-    target[1] - source[1],
-  ];
-
-  const cursorToSource = [
-    cursor[0] - source[0],
-    cursor[1] - source[1],
-  ];
-
-  const d = (
-    cursorToSource[0] * targetToSource[0] + cursorToSource[1] * targetToSource[1]
-  ) / (
-    targetToSource[0] * targetToSource[0] + targetToSource[1] * targetToSource[1]
-  );
-
-  return [
-    (1 - d) * source[0] + d * target[0],
-    (1 - d) * source[1] + d * target[1],
-  ];
-}
-
-function curvePosition(cursor, center, radius) {
-  const cursorToCenter = [
-    cursor[0] - center[0],
-    cursor[1] - center[1],
-  ];
-
-  const distance = Math.sqrt(cursorToCenter[0] * cursorToCenter[0] + cursorToCenter[1] * cursorToCenter[1]);
-  const ratio = radius / distance;
-  return [
-    center[0] + cursorToCenter[0] * ratio,
-    center[1] + cursorToCenter[1] * ratio,
-  ];
-}
-
 function updateEdgePath(pathSelection) {
   return pathSelection
       .attr('d', function(d) {
