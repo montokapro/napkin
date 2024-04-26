@@ -19,6 +19,7 @@ let envObjectsByIdsIterable;
 let clickedEdgeId;
 let clickedPortId;
 let clickedNodeId;
+let draggedNode;
 
 const equation = d3.select('#equation');
 const calculation = d3.select('#calculation');
@@ -598,30 +599,61 @@ function updateEdge(pathSelection) {
   return pathSelection;
 }
 
-// https://stackoverflow.com/questions/28102089/simple-graph-of-nodes-and-links-without-using-force-layout
-function dragStarted(groupSelection) {
-  // d3.select(this).raise(); draws on top of other elements
-  groupSelection.attr('cursor', 'grabbing');
-}
+// Respond to right click
+// https://github.com/d3/d3-drag/blob/v3.0.0/src/drag.js#L8-L11
+const dragFilter = function(event) {
+  return !event.ctrlKey && (event.button !== 0 || event.button !== 2);
+};
 
-function portDragged(event, d) {
+const duplicateNode = function(originalNode, originalPort) {
+  const duplicateNode = Object.assign({}, originalNode);
+  duplicateNode.id = 'N' + crypto.randomUUID();
+  delete duplicateNode.portIds;
+  env[duplicateNode.id] = duplicateNode;
+
+  for (const port of envObjectsByIdsIterable(originalNode, 'portIds')) {
+    const duplicatePort = Object.assign({}, port);
+    duplicatePort.id = 'P' + crypto.randomUUID();
+    duplicatePort.nodeId = duplicateNode.id;
+    addToArray('portIds')(duplicateNode, duplicatePort.id);
+
+    delete duplicatePort.edgeIds;
+
+    env[duplicatePort.id] = duplicatePort;
+
+    if (originalPort === undefined || originalPort.id === port.id) {
+      const edge = {};
+      edge.id = 'E' + crypto.randomUUID();
+      edge.type = 'edge';
+      env[edge.id] = edge;
+
+      edge['portIds'] = [port.id, duplicatePort.id];
+      addToArray('edgeIds')(port, edge.id);
+      addToArray('edgeIds')(duplicatePort, edge.id);
+
+      duplicatePort.edgeIds = [edge.id];
+
+      edges
+          .selectAll('.edge')
+          .select('#UUID-' + edge.id)
+          .data([edge], (edge) => edge.id)
+          .join(enterEdge, updateEdge);
+    }
+  }
+
+  nodes
+      .selectAll('.node')
+      .select('#UUID-' + duplicateNode.id)
+      .data([duplicateNode], (node) => node.id)
+      .join(enterNode, updateNode);
+
+  return duplicateNode;
+};
+
+function updateNodePoint(event, d) {
   d.point = [event.x, event.y];
 
-  d3.select(this)
-      .attr('cx', d.point[0])
-      .attr('cy', d.point[1]);
-
-  const includePortId = function(edge) {
-    return Array.from(objectIterable(edge, 'portIds')).includes(d.id);
-  };
-
-  updateEdgePath(d3.selectAll('.edge').filter(includePortId));
-}
-
-function nodeDragged(event, d) {
-  d.point = [event.x, event.y];
-
-  d3.select(this)
+  nodes.selectAll('#UUID-' + d.id)
       .attr('transform', 'translate(' + d.point[0] + ',' + d.point[1] + ')');
 
   const nodePortIds = Array.from(objectIterable(d, 'portIds'));
@@ -643,8 +675,70 @@ function nodeDragged(event, d) {
   updateEdgePath(d3.selectAll('.edge').filter(includePortId));
 }
 
-function dragEnded(groupSelection) {
-  groupSelection.attr('cursor', 'grab');
+// https://stackoverflow.com/questions/28102089/simple-graph-of-nodes-and-links-without-using-force-layout
+function nodeDragStarted(event, d) {
+  if (event.sourceEvent.button === 2) {
+    draggedNode = duplicateNode(d, undefined);
+  } else {
+    draggedNode = d;
+  }
+
+  nodes.selectAll('#UUID-' + draggedNode.id).attr('cursor', 'grabbing');
+}
+
+function nodeDragged(event, d) {
+  if (draggedNode === undefined) {
+    updateNodePoint(event, d);
+  } else {
+    updateNodePoint(event, draggedNode);
+  }
+}
+
+function nodeDragEnded(event, d) {
+  nodes.selectAll('#UUID-' + draggedNode.id).attr('cursor', 'grab');
+
+  draggedNode = undefined;
+}
+
+function updatePortPoint(event, d, self) {
+  d.point = [event.x, event.y];
+
+  d3.select(self)
+      .attr('cx', d.point[0])
+      .attr('cy', d.point[1]);
+
+  const includePortId = function(edge) {
+    return Array.from(objectIterable(edge, 'portIds')).includes(d.id);
+  };
+
+  updateEdgePath(d3.selectAll('.edge').filter(includePortId));
+}
+
+function portDragStarted(event, d) {
+  if (event.sourceEvent.button === 2) {
+    const node = env[d.nodeId];
+
+    draggedNode = duplicateNode(node, d);
+  }
+}
+
+function portDragged(event, d) {
+  if (draggedNode === undefined) {
+    updatePortPoint(event, d, this);
+  } else {
+    const node = env[d.nodeId];
+
+    const point = {
+      x: node.point[0] - d.point[0] + event.x,
+      y: node.point[1] - d.point[1] + event.y,
+    };
+
+    updateNodePoint(point, draggedNode);
+  }
+}
+
+function portDragEnded(event, d) {
+  draggedNode = undefined;
 }
 
 function updatePortFill(circleSelection) {
@@ -679,7 +773,13 @@ function enterPort(groupSelection) {
       .attr('cx', (d) => d.point[0])
       .attr('cy', (d) => d.point[1])
       .style('stroke-width', 0)
-      .call(d3.drag().on('drag', portDragged));
+      .call(
+          d3.drag()
+              .filter(dragFilter)
+              .on('start', portDragStarted)
+              .on('drag', portDragged)
+              .on('end', portDragEnded),
+      );
 
   updatePortFill(circleSelection);
   updatePortVisible(circleSelection);
@@ -732,12 +832,16 @@ function enterNode(selection) {
       })
       .on('mouseover', nodeOver)
       .on('mouseout', nodeOut)
-      .on('click', nodeClick);
+      .on('click', nodeClick)
+      .on('contextmenu', (e) => e.preventDefault()); // respond to right-click
 
-  groupSelection.call(d3.drag()
-      .on('start', dragStarted(groupSelection))
-      .on('drag', nodeDragged)
-      .on('end', dragEnded(groupSelection)));
+  groupSelection.call(
+      d3.drag()
+          .filter(dragFilter)
+          .on('start', nodeDragStarted)
+          .on('drag', nodeDragged)
+          .on('end', nodeDragEnded),
+  );
 
   const circleSelection = groupSelection.append('circle')
       .attr('class', 'nodeCircle')
@@ -775,7 +879,9 @@ function enterNode(selection) {
 }
 
 function updateNode(groupSelection) {
-  return updateNodeFill(groupSelection.select('.nodeCircle'));
+  updateNodeFill(groupSelection.select('.nodeCircle'));
+
+  return groupSelection;
 }
 
 function update() {
