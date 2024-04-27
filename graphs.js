@@ -571,7 +571,7 @@ const graphs = {
         ],
       },
       {
-        point: [5, 2],
+        point: [5, 1],
         operator: 2,
         ports: [
           {
@@ -586,11 +586,7 @@ const graphs = {
       },
       {
         point: [3, 3],
-        name: '2',
-        float: 2,
-        value: {
-          float: 2,
-        },
+        operator: 1,
         ports: [
           {
             point: [-1, 0],
@@ -598,6 +594,24 @@ const graphs = {
           },
           {
             point: [1, 0],
+            edgeIds: [12],
+          },
+        ],
+      },
+      {
+        point: [4, 2],
+        name: '2',
+        float: 2,
+        value: {
+          float: 2,
+        },
+        ports: [
+          {
+            point: [0, 1],
+            edgeIds: [12],
+          },
+          {
+            point: [0, -1],
             edgeIds: [5],
           },
         ],
@@ -617,15 +631,15 @@ const graphs = {
         ],
       },
       {
-        point: [6, 4],
+        point: [5, 5],
         operator: 1,
         ports: [
           {
-            point: [0, -1],
+            point: [1, 0],
             edgeIds: [6],
           },
           {
-            point: [0, 1],
+            point: [-1, 0],
             edgeIds: [9, 11],
           },
         ],
@@ -659,7 +673,7 @@ const graphs = {
         ],
       },
       {
-        point: [7, 5],
+        point: [4, 4],
         name: '5',
         float: 5,
         value: {
@@ -667,7 +681,7 @@ const graphs = {
         },
         ports: [
           {
-            point: [-1, 0],
+            point: [0, 1],
             edgeIds: [11],
           },
         ],
