@@ -597,13 +597,13 @@ const dragFilter = function(event) {
 
 const duplicateNode = function(originalNode, originalPort) {
   const duplicateNode = Object.assign({}, originalNode);
-  duplicateNode.id = 'N' + crypto.randomUUID();
+  duplicateNode.id = crypto.randomUUID();
   delete duplicateNode.portIds;
   env[duplicateNode.id] = duplicateNode;
 
   for (const port of envObjectsByIdsIterable(originalNode, 'portIds')) {
     const duplicatePort = Object.assign({}, port);
-    duplicatePort.id = 'P' + crypto.randomUUID();
+    duplicatePort.id = crypto.randomUUID();
     duplicatePort.nodeId = duplicateNode.id;
     addToArray('portIds')(duplicateNode, duplicatePort.id);
 
@@ -613,7 +613,7 @@ const duplicateNode = function(originalNode, originalPort) {
 
     if (originalPort === undefined || originalPort.id === port.id) {
       const edge = {};
-      edge.id = 'E' + crypto.randomUUID();
+      edge.id = crypto.randomUUID();
       edge.type = 'edge';
       env[edge.id] = edge;
 
