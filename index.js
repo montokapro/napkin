@@ -3,12 +3,8 @@
 import {graphs} from './graphs.js';
 import {hyperlogarithmicOperations} from './operations.js';
 import {
-  add_to_array as addToArray,
-  remove_from_array as removeFromArray,
-
-  iterable_map as iterableMap,
-  object_iterable as objectIterable,
-  objects_by_ids_iterable as objectsByIdsIterable,
+  addToArray, removeFromArray,
+  iterableMap, objectIterable, objectsByIdsIterable,
 } from './struct.js';
 
 const thickness = 1 / 8;
@@ -375,7 +371,6 @@ function equationVisitors(selected) {
       reversionSymbol = operation.reversion.symbol;
     }
 
-    let edgeEquation;
     if (edgeResult[0]) {
       const nodeEquation = nodeResult[1];
       const edgeEquation = edgeResult[1];

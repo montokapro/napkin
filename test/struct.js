@@ -1,33 +1,33 @@
 import {
-  add_to_set, add_to_array, add_to_env,
-  remove_from_set, remove_from_array, remove_from_env,
+  addToSet, addToArray, addToEnv,
+  removeFromSet, removeFromArray, removeFromEnv,
 
-  add_alias_to_set, add_alias_to_array, add_alias_to_env,
-  remove_alias_from_set, remove_alias_from_array, remove_alias_from_env,
+  addAliasToSet, addAliasToArray, addAliasToEnv,
+  removeAliasFromSet, removeAliasFromArray, removeAliasFromEnv,
 
-  add_parent_to_set, add_parent_to_array, add_parent_to_env,
-  remove_parent_from_set, remove_parent_from_array, remove_parent_from_env,
+  addParentToSet, addParentToArray, addParentToEnv,
+  removeParentFromSet, removeParentFromArray, removeParentFromEnv,
 
-  add_child_to_set, add_child_to_array, add_child_to_env,
-  remove_child_from_set, remove_child_from_array, remove_child_from_env,
+  addChildToSet, addChildToArray, addChildToEnv,
+  removeChildFromSet, removeChildFromArray, removeChildFromEnv,
 
   repair,
-  delete_objects,
+  deleteObjects,
 
-  iterable_map,
-  object_iterable,
-  objects_by_ids_iterable,
+  iterableMap,
+  objectIterable,
+  objectsByIdsIterable,
 } from '../struct.js';
 
 import assert from 'assert';
 
 describe('alias', () => {
-  describe('#add_alias_to_set', () => {
+  describe('#addAliasToSet', () => {
     it('add', () => {
       const value = {};
       const alias = {};
 
-      add_alias_to_set(value, alias);
+      addAliasToSet(value, alias);
 
       assert.ok(value.aliases.has(alias));
     });
@@ -36,22 +36,22 @@ describe('alias', () => {
       const value = {};
       const alias = {};
 
-      add_alias_to_set(value, alias);
+      addAliasToSet(value, alias);
 
       assert.ok(value.aliases.has(alias));
     });
   });
 
-  describe('#add_alias_to_array', () => {
+  describe('#addAliasToArray', () => {
     it('add', () => {
       const env = [
         {},
         {},
       ];
 
-      add_alias_to_array(env[0], 1);
+      addAliasToArray(env[0], 1);
 
-      assert.equal(env[0].alias_ids[0], 1);
+      assert.equal(env[0].aliasIds[0], 1);
     });
 
     it('idempotent', () => {
@@ -60,19 +60,19 @@ describe('alias', () => {
         {},
       ];
 
-      add_alias_to_array(env[0], 1);
+      addAliasToArray(env[0], 1);
 
-      assert.equal(env[0].alias_ids[0], 1);
+      assert.equal(env[0].aliasIds[0], 1);
     });
   });
 
-  describe('#remove_alias_from_set', () => {
+  describe('#removeAliasFromSet', () => {
     it('remove', () => {
       const value = {};
       const alias = {};
 
-      add_alias_to_set(value, alias);
-      remove_alias_from_set(value, alias);
+      addAliasToSet(value, alias);
+      removeAliasFromSet(value, alias);
 
       assert.equal(value.aliases, undefined);
     });
@@ -81,24 +81,24 @@ describe('alias', () => {
       const value = {};
       const alias = {};
 
-      add_alias_to_set(value, alias);
-      remove_alias_from_set(value, alias);
+      addAliasToSet(value, alias);
+      removeAliasFromSet(value, alias);
 
       assert.equal(value.aliases, undefined);
     });
   });
 
-  describe('#remove_alias_from_array', () => {
+  describe('#removeAliasFromArray', () => {
     it('remove', () => {
       const env = [
         {},
         {},
       ];
 
-      add_alias_to_array(env[0], 1);
-      remove_alias_from_array(env[0], 1);
+      addAliasToArray(env[0], 1);
+      removeAliasFromArray(env[0], 1);
 
-      assert.equal(env[0].alias_ids, undefined);
+      assert.equal(env[0].aliasIds, undefined);
     });
 
     it('idempotent', () => {
@@ -107,11 +107,11 @@ describe('alias', () => {
         {},
       ];
 
-      add_alias_to_array(env[0], 1);
-      remove_alias_from_array(env[0], 1);
-      remove_alias_from_array(env[0], 1);
+      addAliasToArray(env[0], 1);
+      removeAliasFromArray(env[0], 1);
+      removeAliasFromArray(env[0], 1);
 
-      assert.equal(env[0].alias_ids, undefined);
+      assert.equal(env[0].aliasIds, undefined);
     });
   });
 });
@@ -120,42 +120,42 @@ describe('#repair', () => {
   it('repairs', () => {
     const env = [
       {
-        alias_ids: [1],
+        aliasIds: [1],
       },
       {
-        parent_ids: [2],
+        parentIds: [2],
       },
       {
-        alias_ids: [0, 1],
-        child_ids: [3],
+        aliasIds: [0, 1],
+        childIds: [3],
       },
       {
-        parent_ids: [1, 2],
-        child_ids: [2, 0],
+        parentIds: [1, 2],
+        childIds: [2, 0],
       },
     ];
 
     repair(env);
-    delete_objects(env);
+    deleteObjects(env);
 
     const expected = [
       {
-        alias_ids: [1, 2],
-        parent_ids: [3],
+        aliasIds: [1, 2],
+        parentIds: [3],
       },
       {
-        alias_ids: [0, 2],
-        child_ids: [3],
-        parent_ids: [2],
+        aliasIds: [0, 2],
+        childIds: [3],
+        parentIds: [2],
       },
       {
-        alias_ids: [0, 1],
-        parent_ids: [3],
-        child_ids: [3, 1],
+        aliasIds: [0, 1],
+        parentIds: [3],
+        childIds: [3, 1],
       },
       {
-        parent_ids: [1, 2],
-        child_ids: [2, 0],
+        parentIds: [1, 2],
+        childIds: [2, 0],
       },
     ];
 
@@ -163,9 +163,9 @@ describe('#repair', () => {
   });
 });
 
-describe('#iterable_map', () => {
+describe('#iterableMap', () => {
   it('maps lazily', () => {
-    const result_then_error = function() {
+    const resultThenError = function() {
       let complete = false;
 
       return {
@@ -184,29 +184,29 @@ describe('#iterable_map', () => {
       };
     };
 
-    const iterator = iterable_map(result_then_error(), (i) => i + 1);
+    const iterator = iterableMap(resultThenError(), (i) => i + 1);
 
     assert.equal(iterator[Symbol.iterator]().next().value, 1);
   });
 });
 
-describe('#object_iterable', () => {
+describe('#objectIterable', () => {
   it('iterates when present', () => {
     const object = {a: [1, 2, 3]};
-    const iterator = object_iterable(object, 'a');
+    const iterator = objectIterable(object, 'a');
 
-    assert.deepEqual(new Array(...iterator), [1, 2, 3]);
+    assert.deepEqual([...iterator], [1, 2, 3]);
   });
 
   it('iterates when missing', () => {
     const object = {};
-    const iterator = object_iterable(object, 'a');
+    const iterator = objectIterable(object, 'a');
 
-    assert.deepEqual(new Array(...iterator), []);
+    assert.deepEqual([...iterator], []);
   });
 });
 
-describe('#objects_by_ids_iterable', () => {
+describe('#objectsByIdsIterable', () => {
   it('iterates', () => {
     const env = [
       {
@@ -220,6 +220,6 @@ describe('#objects_by_ids_iterable', () => {
       },
     ];
 
-    assert.deepEqual(new Array(...objects_by_ids_iterable(env)(env[0], 'ids')), [env[2], env[1]]);
+    assert.deepEqual([...objectsByIdsIterable(env)(env[0], 'ids')], [env[2], env[1]]);
   });
 });

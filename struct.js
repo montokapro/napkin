@@ -4,7 +4,7 @@
 //
 
 // returns true if changed
-function idempotent_add(array, value) {
+function idempotentAdd(array, value) {
   let index = -1;
   while (index < array.length && array[index] !== value) {
     index = index + 1;
@@ -19,7 +19,7 @@ function idempotent_add(array, value) {
 }
 
 // returns true if changed
-function idempotent_remove(array, value) {
+function idempotentRemove(array, value) {
   let index = -1;
   while (index < array.length && array[index] !== value) {
     index = index + 1;
@@ -34,7 +34,7 @@ function idempotent_remove(array, value) {
 }
 
 // Efficient data structure, hard to serialize
-const add_to_set = function(name) {
+const addToSet = function(name) {
   return function(source, target) {
     if (!(name in source)) {
       source[name] = new Set([target]);
@@ -45,18 +45,18 @@ const add_to_set = function(name) {
 };
 
 // Inefficient data structure, easy to serialize
-const add_to_array = function(name) {
+const addToArray = function(name) {
   return function(source, target) {
     if (!(name in source)) {
       source[name] = [];
     }
 
-    idempotent_add(source[name], target);
+    idempotentAdd(source[name], target);
   };
 };
 
 // Efficient data structure, hard to serialize
-const remove_from_set = function(name) {
+const removeFromSet = function(name) {
   return function(source, target) {
     if (name in source) {
       source[name].delete(target);
@@ -69,10 +69,10 @@ const remove_from_set = function(name) {
 };
 
 // Inefficient data structure, easy to serialize
-const remove_from_array = function(name) {
+const removeFromArray = function(name) {
   return function(source, target) {
     if (name in source) {
-      idempotent_remove(source[name], target);
+      idempotentRemove(source[name], target);
 
       if (source[name].length === 0) {
         delete source[name];
@@ -82,91 +82,91 @@ const remove_from_array = function(name) {
 };
 
 // Include both data structures
-const add_to_env = function(set_name, array_name) {
-  const add_set = add_to_set(set_name);
-  const add_array = add_to_array(array_name);
+const addToEnv = function(setName, arrayName) {
+  const addSet = addToSet(setName);
+  const addArray = addToArray(arrayName);
 
-  return function(env, source_id, target_id) {
-    const source = env[source_id];
+  return function(env, sourceId, targetId) {
+    const source = env[sourceId];
 
-    add_set(source, target);
-    add_array(source, target_id);
+    addSet(source, target);
+    addArray(source, targetId);
   };
 };
 
 // Include both data structures
-const remove_from_env = function(set_name, array_name) {
-  const remove_set = remove_from_set(set_name);
-  const remove_array = remove_from_array(array_name);
+const removeFromEnv = function(setName, arrayName) {
+  const removeSet = removeFromSet(setName);
+  const removeArray = removeFromArray(arrayName);
 
-  return function(env, source_id, target_id) {
-    const source = env[source_id];
+  return function(env, sourceId, targetId) {
+    const source = env[sourceId];
 
-    remove_array(source, target);
-    remove_set(source, target);
+    removeArray(source, target);
+    removeSet(source, target);
   };
 };
 
-const add_alias_to_set = add_to_set('aliases');
-const add_alias_to_array = add_to_array('alias_ids');
-const add_alias_to_env = add_to_env('aliases', 'alias_ids');
-const remove_alias_from_set = remove_from_set('aliases');
-const remove_alias_from_array = remove_from_array('alias_ids');
-const remove_alias_from_env = remove_from_env('aliases', 'alias_ids');
+const addAliasToSet = addToSet('aliases');
+const addAliasToArray = addToArray('aliasIds');
+const addAliasToEnv = addToEnv('aliases', 'aliasIds');
+const removeAliasFromSet = removeFromSet('aliases');
+const removeAliasFromArray = removeFromArray('aliasIds');
+const removeAliasFromEnv = removeFromEnv('aliases', 'aliasIds');
 
-const add_parent_to_set = add_to_set('parents');
-const add_parent_to_array = add_to_array('parent_ids');
-const add_parent_to_env = add_to_env('parents', 'parent_ids');
-const remove_parent_from_set = remove_from_set('parents');
-const remove_parent_from_array = remove_from_array('parent_ids');
-const remove_parent_from_env = remove_from_env('parents', 'parent_ids');
+const addParentToSet = addToSet('parents');
+const addParentToArray = addToArray('parentIds');
+const addParentToEnv = addToEnv('parents', 'parentIds');
+const removeParentFromSet = removeFromSet('parents');
+const removeParentFromArray = removeFromArray('parentIds');
+const removeParentFromEnv = removeFromEnv('parents', 'parentIds');
 
-const add_child_to_set = add_to_set('children');
-const add_child_to_array = add_to_array('child_ids');
-const add_child_to_env = add_to_env('children', 'child_ids');
-const remove_child_from_set = remove_from_set('children');
-const remove_child_from_array = remove_from_array('child_ids');
-const remove_child_from_env = remove_from_env('children', 'child_ids');
+const addChildToSet = addToSet('children');
+const addChildToArray = addToArray('childIds');
+const addChildToEnv = addToEnv('children', 'childIds');
+const removeChildFromSet = removeFromSet('children');
+const removeChildFromArray = removeFromArray('childIds');
+const removeChildFromEnv = removeFromEnv('children', 'childIds');
 
 const repair = function(env) {
   const f = function(
-      source_id_name, source_object_name,
-      target_id_name, target_object_name,
+      sourceIdName, sourceObjectName,
+      targetIdName, targetObjectName,
   ) {
-    const add_id = add_to_array(target_id_name);
-    const add_object = add_to_set(target_object_name);
+    const addId = addToArray(targetIdName);
+    const addObject = addToSet(targetObjectName);
 
-    return function(source_id, source) {
-      if (source_id_name in source) {
-        for (const target_id of source[source_id_name]) {
-          const target = env[target_id];
+    return function(sourceId, source) {
+      if (sourceIdName in source) {
+        for (const targetId of source[sourceIdName]) {
+          const target = env[targetId];
 
-          add_id(target, source_id);
-          add_object(target, source);
+          addId(target, sourceId);
+          addObject(target, source);
         }
       }
 
-      if (source_object_name in source) {
-        for (const target of source[source_object_name]) {
-          add_id(target, source_id);
-          add_object(target, source);
+      if (sourceObjectName in source) {
+        for (const target of source[sourceObjectName]) {
+          addId(target, sourceId);
+          addObject(target, source);
         }
       }
     };
   };
 
-  const repair_aliases = f('alias_ids', 'aliases', 'alias_ids', 'aliases');
-  const repair_parents = f('parent_ids', 'parents', 'child_ids', 'children');
-  const repair_children = f('child_ids', 'children', 'parent_ids', 'parents');
+  const repairAliases = f('aliasIds', 'aliases', 'aliasIds', 'aliases');
+  const repairParents = f('parentIds', 'parents', 'childIds', 'children');
+  const repairChildren = f('childIds', 'children', 'parentIds', 'parents');
 
   for (let i = 0; i < env.length; i++) {
-    repair_aliases(i, env[i]);
-    repair_parents(i, env[i]);
-    repair_children(i, env[i]);
+    repairAliases(i, env[i]);
+    repairParents(i, env[i]);
+    repairChildren(i, env[i]);
   }
 };
 
-const delete_objects = function(env) {
+const deleteObjects = function(env) {
   for (let i = 0; i < env.length; i++) {
     delete env[i]['aliases'];
     delete env[i]['parents'];
@@ -174,7 +174,7 @@ const delete_objects = function(env) {
   }
 };
 
-const iterable_map = function(iterable, f) {
+const iterableMap = function(iterable, f) {
   const iterator = iterable[Symbol.iterator]();
 
   return {
@@ -193,9 +193,9 @@ const iterable_map = function(iterable, f) {
   };
 };
 
-const object_iterable = function(object, iterable_name) {
-  if (iterable_name in object) {
-    return object[iterable_name];
+const objectIterable = function(object, iterableName) {
+  if (iterableName in object) {
+    return object[iterableName];
   } else {
     return {
       [Symbol.iterator]: function() {
@@ -209,12 +209,12 @@ const object_iterable = function(object, iterable_name) {
   };
 };
 
-const objects_by_ids_iterable = function(env) {
-  return function(object, iterable_name) {
-    return iterable_map(
-        object_iterable(
+const objectsByIdsIterable = function(env) {
+  return function(object, iterableName) {
+    return iterableMap(
+        objectIterable(
             object,
-            iterable_name,
+            iterableName,
         ),
         (id) => env[id],
     );
@@ -222,22 +222,22 @@ const objects_by_ids_iterable = function(env) {
 };
 
 export {
-  add_to_set, add_to_array, add_to_env,
-  remove_from_set, remove_from_array, remove_from_env,
+  addToSet, addToArray, addToEnv,
+  removeFromSet, removeFromArray, removeFromEnv,
 
-  add_alias_to_set, add_alias_to_array, add_alias_to_env,
-  remove_alias_from_set, remove_alias_from_array, remove_alias_from_env,
+  addAliasToSet, addAliasToArray, addAliasToEnv,
+  removeAliasFromSet, removeAliasFromArray, removeAliasFromEnv,
 
-  add_parent_to_set, add_parent_to_array, add_parent_to_env,
-  remove_parent_from_set, remove_parent_from_array, remove_parent_from_env,
+  addParentToSet, addParentToArray, addParentToEnv,
+  removeParentFromSet, removeParentFromArray, removeParentFromEnv,
 
-  add_child_to_set, add_child_to_array, add_child_to_env,
-  remove_child_from_set, remove_child_from_array, remove_child_from_env,
+  addChildToSet, addChildToArray, addChildToEnv,
+  removeChildFromSet, removeChildFromArray, removeChildFromEnv,
 
   repair,
-  delete_objects,
+  deleteObjects,
 
-  iterable_map,
-  object_iterable,
-  objects_by_ids_iterable,
+  iterableMap,
+  objectIterable,
+  objectsByIdsIterable,
 };
