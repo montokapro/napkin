@@ -384,15 +384,10 @@ function equationVisitors(selected) {
         true,
         {
           operator: node.operator,
-          name: [nodeEquation, edgeEquation]
-              .map(function(equation) {
-                if (equation.operator < node.operator) {
-                  return '(' + equation.name + ')';
-                } else {
-                  return equation.name;
-                }
-              })
-              .join(' ' + reversionSymbol + ' '),
+          name: [
+            nodeEquation.operator < node.operator ? '(' + nodeEquation.name + ')' : nodeEquation.name,
+            edgeEquation.operator <= node.operator ? '(' + edgeEquation.name + ')' : edgeEquation.name,
+          ].join(' ' + reversionSymbol + ' '),
         },
       ];
     } else {
