@@ -96,6 +96,7 @@ const graphs = {
     equality: [
       {
         point: [1, 2],
+        name: 'a',
         ports: [
           {
             point: [0, -1],
@@ -122,6 +123,7 @@ const graphs = {
       },
       {
         point: [5, 2],
+        name: 'b',
         ports: [
           {
             point: [0, -1],
@@ -137,6 +139,7 @@ const graphs = {
     addition: [
       {
         point: [1, 2],
+        name: 'a',
         ports: [
           {
             point: [0, -1],
@@ -164,6 +167,7 @@ const graphs = {
       },
       {
         point: [5, 2],
+        name: 'b',
         ports: [
           {
             point: [0, -1],
@@ -205,6 +209,44 @@ const graphs = {
       {
         point: [1, 3],
         name: 'b',
+        ports: [
+          {
+            point: [0, -1],
+            edgeIds: [1],
+          },
+        ],
+      },
+    ],
+    multiplication: [
+      {
+        point: [1, 1],
+        name: '2',
+        value: 2,
+        float: {
+          value: 2,
+        },
+        ports: [
+          {
+            point: [0, 1],
+            edgeIds: [0],
+          },
+        ],
+      },
+      {
+        point: [2, 2],
+        operator: 2,
+        ports: [
+          {
+            point: [-1, 0],
+            edgeIds: [0, 1],
+          },
+          {
+            point: [1, 0],
+          },
+        ],
+      },
+      {
+        point: [1, 3],
         ports: [
           {
             point: [0, -1],
@@ -683,6 +725,164 @@ const graphs = {
           {
             point: [0, 1],
             edgeIds: [11],
+          },
+        ],
+      },
+    ],
+    split: [
+      // 4 + 1 = 2 + 3
+      {
+        point: [1, 1],
+        name: '4',
+        value: 4,
+        value: {
+          float: 4,
+        },
+        ports: [
+          {
+            point: [0, 1],
+            edgeIds: [0],
+          },
+        ],
+      },
+      {
+        point: [3, 1],
+        name: '2',
+        value: 2,
+        value: {
+          float: 2,
+        },
+        ports: [
+          {
+            point: [0, 1],
+            edgeIds: [1],
+          },
+        ],
+      },
+      {
+        point: [2, 2],
+        operator: 1,
+        ports: [
+          {
+            point: [-1, 0],
+            edgeIds: [0, 2],
+          },
+          {
+            point: [1, 0],
+            edgeIds: [1, 3],
+          },
+        ],
+      },
+      {
+        point: [1, 3],
+        name: '1',
+        value: 1,
+        value: {
+          float: 1,
+        },
+        ports: [
+          {
+            point: [0, -1],
+            edgeIds: [2],
+          },
+        ],
+      },
+      {
+        point: [3, 3],
+        name: '3',
+        value: 3,
+        value: {
+          float: 3,
+        },
+        ports: [
+          {
+            point: [0, -1],
+            edgeIds: [3],
+          },
+        ],
+      },
+      // 4 - 3 = 2 - 1
+      {
+        point: [1, 4],
+        name: '4',
+        value: 4,
+        value: {
+          float: 4,
+        },
+        ports: [
+          {
+            point: [0, 1],
+            edgeIds: [4],
+          },
+        ],
+      },
+      {
+        point: [3, 4],
+        name: '2',
+        value: 2,
+        value: {
+          float: 2,
+        },
+        ports: [
+          {
+            point: [0, 1],
+            edgeIds: [5],
+          },
+        ],
+      },
+      {
+        point: [2, 5],
+        operator: 1,
+        ports: [
+          {
+            point: [-1, 0],
+            edgeIds: [4],
+          },
+          {
+            point: [1, 0],
+            edgeIds: [8, 5],
+          },
+        ],
+      },
+      {
+        point: [4, 5],
+        operator: 1,
+        ports: [
+          {
+            point: [-1, 0],
+            edgeIds: [8, 6],
+          },
+          {
+            point: [1, 0],
+            edgeIds: [7],
+          },
+        ],
+      },
+      {
+        point: [3, 6],
+        name: '1',
+        value: 1,
+        value: {
+          float: 1,
+        },
+        ports: [
+          {
+            point: [0, -1],
+            edgeIds: [6],
+          },
+        ],
+      },
+      {
+        point: [5, 6],
+        name: '3',
+        value: 3,
+        value: {
+          float: 3,
+        },
+        ports: [
+          {
+            point: [0, -1],
+            edgeIds: [7],
           },
         ],
       },
