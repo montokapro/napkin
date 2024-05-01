@@ -60,6 +60,17 @@ const nodes = image
     .append('g')
     .attr('id', 'nodes');
 
+const prettyNumber = function(number) {
+  switch (number) {
+    case -Infinity:
+      return '-∞';
+    case Infinity:
+      return '∞';
+    default:
+      return number;
+  }
+};
+
 function valueVisitors() {
   const visit = function(f, a) {
     if ('value' in a) {
@@ -67,8 +78,6 @@ function valueVisitors() {
     } else {
       a.value = undefined; // visiting
       a.value = f(a);
-      console.log(a.type);
-      console.log(a.value);
       return a.value;
     }
   };
@@ -95,17 +104,6 @@ function valueVisitors() {
       return portValues[0];
     }
   }
-
-  const prettyNumber = function(number) {
-    switch (number) {
-      case -Infinity:
-        return '-∞';
-      case Infinity:
-        return '∞';
-      default:
-        return number;
-    }
-  };
 
   function portVisit(port) {
     const node = env[port.nodeId];
@@ -225,281 +223,311 @@ function valueVisitors() {
   };
 }
 
-function equationVisitors(selected) {
-  const visits = {};
+// Use strict fixed point combinator so that we can test steps independently
+// https://en.wikipedia.org/wiki/Fixed-point_combinator#Strict_fixed-point_combinator
+const z = function(f) {
+  const g = (a) => f((v) => a(a)(v));
 
-  const visit = function(f, a) {
-    if ('name' in a) {
-      return [
-        true,
-        {
-          operator: Infinity,
-          name: a['name'],
-        },
-      ];
-    }
+  return g(g);
+};
 
-    if (a.id in visits) {
-      if (visits[a.id]) {
-        // already visited, error
-        return [undefined];
-      } else {
-        // already visiting, ignore
-        return [false];
-      }
-    } else {
-      visits[a.id] = false;
-      const r = f(a);
-      visits[a.id] = true;
-      return r;
-    }
+// Linear, cannot be used concurrently
+const withStackTraceF = function(visit) {
+  return function(trace) {
+    return function(focus) {
+      trace.unshift(focus.id);
+      const result = visit(focus);
+      trace.shift();
+      return result;
+    };
   };
+};
 
-  function nodeVisit(node) {
-    const portEquations = [];
-    for (const port of envObjectsByIdsIterable(node, 'portIds')) {
-      const portResult = visit(portVisit, port);
-      switch (portResult[0]) {
-        case true:
-          portEquations.push(portResult[1]);
-          break;
-      }
-    }
+const equationVisitF = function(visit) {
+  return function(trace) {
+    const go = function(focus) {
+      const traceVisit = visit(trace);
 
-    if (portEquations.length === 0) {
-      return [undefined];
-    } else if (portEquations.length === 1) {
-      return [true, portEquations[0]];
-    } else {
-      return [
-        true,
-        {
-          operator: -Infinity,
-          name: portEquations.map(function(equation) {
-            return equation.name;
-          }).join(' = '),
-        },
-      ];
-    }
-  }
-
-  const prettyNumber = function(number) {
-    switch (number) {
-      case -Infinity:
-        return '-∞';
-      case Infinity:
-        return '∞';
-      default:
-        return number;
-    }
-  };
-
-  function portVisit(port) {
-    const node = env[port.nodeId];
-
-    let operation;
-    if ('operator in node') {
-      operation = hyperlogarithmicOperations[node.operator];
-    }
-
-    let visitingPort = false;
-    const edgeEquations = [];
-    for (const edge of envObjectsByIdsIterable(port, 'edgeIds')) {
-      const edgeResult = visit(edgeVisit, edge);
-      switch (edgeResult[0]) {
-        case undefined:
-          if (operation !== undefined) {
-            return edgeResult;
-          }
-        case false:
-          visitingPort = true;
-          break;
-        case true:
-          edgeEquations.push(edgeResult[1]);
-          break;
-      }
-    }
-
-    let edgeResult;
-    if (edgeEquations.length === 0) {
-      if (visitingPort || operation === undefined) {
-        edgeResult = [undefined];
-      } else {
-        edgeResult = [
-          true,
-          {
-            operator: Infinity,
-            name: prettyNumber(operation.identity),
-          },
-        ];
-      }
-    } else if (edgeEquations.length === 1) {
-      edgeResult = [true, edgeEquations[0]];
-    } else {
-      let commutationSymbol = '=';
-      if (operation !== undefined) {
-        commutationSymbol = operation.commutation.symbol;
-      }
-      edgeResult = [
-        true,
-        {
-          operator: node.operator,
-          name: edgeEquations.map(function(equation) {
-            if (equation.operator < node.operator) {
-              return '(' + equation.name + ')';
-            } else {
-              return equation.name;
+      switch (focus.type) {
+        case 'node':
+        case 'edge':
+          const portEquations = [];
+          for (const portId of objectIterable(focus, 'portIds')) {
+          // TODO: check only previous port, otherwise assume cycle
+            if (!trace.includes(portId)) {
+              portEquations.push(traceVisit(portId));
             }
-          }).join(' ' + commutationSymbol + ' '),
-        },
-      ];
-    }
+          }
 
-    const nodeResult = visit(nodeVisit, node);
-    switch (nodeResult[0]) {
-      case undefined:
-        return nodeResult;
-      case false:
-      // TODO: inverse
-        return edgeResult;
-    }
+          switch (portEquations.length) {
+            case 0:
+              return undefined;
+            case 1:
+              return portEquations[0];
+            default:
+              return {
+                operator: -Infinity,
+                name: portEquations.map(function(equation) {
+                  return equation.name;
+                }).join(' = '),
+              };
+          }
 
-    let reversionSymbol = '=';
-    if (operation === undefined) {
-      return nodeResult;
-    } else {
-      reversionSymbol = operation.reversion.symbol;
-    }
+          return;
+        case 'port':
+          const node = env[focus.nodeId];
 
-    if (edgeResult[0]) {
-      const nodeEquation = nodeResult[1];
-      const edgeEquation = edgeResult[1];
+          let operation;
+          if ('operator' in node) {
+            const operation = hyperlogarithmicOperations[node.operator];
 
-      return [
-        true,
-        {
-          operator: node.operator,
-          name: [
-            nodeEquation.operator < node.operator ? '(' + nodeEquation.name + ')' : nodeEquation.name,
-            edgeEquation.operator <= node.operator ? '(' + edgeEquation.name + ')' : edgeEquation.name,
-          ].join(' ' + reversionSymbol + ' '),
-        },
-      ];
-    } else {
-      return nodeResult;
-    }
-  }
+            const identityEquation = {
+              operator: Infinity,
+              name: prettyNumber(operation.identity),
+            };
 
-  function edgeVisit(edge) {
-    const portEquations = [];
-    for (const port of envObjectsByIdsIterable(edge, 'portIds')) {
-      const portResult = visit(portVisit, port);
-      switch (portResult[0]) {
-        case true:
-          portEquations.push(portResult[1]);
-          break;
+            const commutationSymbol = operation.commutation.symbol;
+            const commutationEquation = function(equations) {
+              return {
+                operator: node.operator,
+                name: equations.map(function(equation) {
+                  if (equation.operator < node.operator) {
+                    return '(' + equation.name + ')';
+                  } else {
+                    return equation.name;
+                  }
+                }).join(' ' + commutationSymbol + ' '),
+              };
+            };
+
+            // TODO: check only previous edge, otherwise possible cycle
+            let fromEdgeId;
+            const edgeEquations = [];
+            for (const edgeId of objectIterable(focus, 'edgeIds')) {
+              if (trace.includes(edgeId)) {
+                if (fromEdgeId === undefined) {
+                  fromEdgeId = edgeId;
+                } else {
+                  return undefined;
+                }
+              } else {
+                edgeEquations.push(traceVisit(edgeId));
+              }
+            }
+
+            // TODO: check only previous node, otherwise possible cycle
+            let fromNodeId;
+            const nodeEquations = [];
+            if (trace.includes(focus.nodeId)) {
+              if (fromEdgeId === undefined) {
+                fromNodeId = focus.nodeId;
+              } else {
+                return undefined;
+              }
+            } else {
+              nodeEquations.push(traceVisit(focus.nodeId));
+            }
+
+            if (fromNodeId !== undefined) {
+              let edgeEquation;
+              switch (edgeEquations.length) {
+                case 0:
+                  edgeEquation = identityEquation;
+                  break;
+                case 1:
+                  edgeEquation = edgeEquations[0];
+                  break;
+                default:
+                  edgeEquation = commutationEquation(edgeEquations);
+              }
+
+              let nodeEquation;
+              switch (nodeEquations.length) {
+                case 0:
+                  return edgeEquation;
+                default:
+                  nodeEquations.unshift(edgeEquation);
+
+                  const reversionSymbol = operation.reversion.symbol;
+                  return {
+                    operator: node.operator,
+                    name: nodeEquations.map(function(equation) {
+                      if (equation.operator < node.operator) {
+                        return '(' + equation.name + ')';
+                      } else {
+                        return equation.name;
+                      }
+                    }).join(' ' + reversionSymbol + ' '),
+                  };
+              }
+            } else if (fromEdgeId !== undefined) {
+              let nodeEquation;
+              switch (nodeEquations.length) {
+                case 0:
+                  nodeEquation = identityEquation;
+                  break;
+                case 1:
+                  nodeEquation = nodeEquations[0];
+                  break;
+                default:
+                  nodeEquation = commutationEquation(nodeEquations);
+              }
+
+              let edgeEquation;
+              switch (edgeEquations.length) {
+                case 0:
+                  return nodeEquation;
+                default:
+                  edgeEquations.unshift(nodeEquation);
+
+                  const reversionSymbol = operation.reversion.symbol;
+                  return {
+                    operator: node.operator,
+                    name: edgeEquations.map(function(equation) {
+                      if (equation.operator < node.operator) {
+                        return '(' + equation.name + ')';
+                      } else {
+                        return equation.name;
+                      }
+                    }).join(' ' + reversionSymbol + ' '),
+                  };
+              }
+            } else {
+              let nodeEquation;
+              switch (nodeEquations.length) {
+                case 0:
+                  nodeEquation = identityEquation;
+                  break;
+                case 1:
+                  nodeEquation = nodeEquations[0];
+                  break;
+                default:
+                  nodeEquation = commutationEquation(nodeEquations);
+              }
+
+              let edgeEquation;
+              switch (nodeEquations.length) {
+                case 0:
+                  edgeEquation = identityEquation;
+                  break;
+                case 1:
+                  edgeEquation = edgeEquations[0];
+                  break;
+                default:
+                  edgeEquation = commutationEquation(edgeEquations);
+              }
+
+              return {
+                operator: -Infinity,
+                name: [nodeEquation, edgeEquation].map(function(equation) {
+                  return equation.name;
+                }).join(' = '),
+              };
+            }
+          } else {
+            const equations = [];
+            // TODO: check only previous edge, otherwise possible cycle
+            for (const edgeId of objectIterable(focus, 'edgeIds')) {
+              if (!trace.includes(edgeId)) {
+                equations.push(traceVisit(edgeId));
+              }
+            }
+            // TODO: check only previous node, otherwise possible cycle
+            if (!trace.includes(focus.nodeId)) {
+              equations.push(traceVisit(focus.nodeId));
+            }
+
+            switch (equations.length) {
+              case 0:
+                return undefined;
+              case 1:
+                return equations[0];
+              default:
+                return {
+                  operator: -Infinity,
+                  name: equations.map(function(equation) {
+                    return equation.name;
+                  }).join(' = '),
+                };
+            }
+          }
       }
-    }
+    };
 
-    if (portEquations.length === 0) {
-      return [undefined];
-    } else if (portEquations.length === 1) {
-      return [true, portEquations[0]];
-    } else {
-      return [
-        true,
-        {
+    return function(focusId) {
+      const focus = env[focusId];
+
+      if ('name' in focus) {
+        return {
           operator: Infinity,
-          name: portEquations.map(function(equation) {
-            return equation.name;
-          }).join(' = '),
-        },
-      ];
-    }
-  }
-
-  const visitString = function(f) {
-    return function(a) {
-      const result = visit(f, a);
-      switch (result[0]) {
-        case true:
-          return result[1]['name'];
-        default:
-          return '';
+          name: focus['name'],
+        };
       }
+
+      return withStackTraceF(go)(trace)(focus);
     };
   };
+};
 
-  return {
-    node: visitString(nodeVisit),
-    port: visitString(portVisit),
-    edge: visitString(edgeVisit),
-  };
-}
+const equationVisit = z(equationVisitF)([]);
 
-function selectVisitors(selected) {
-  const visits = {};
-
-  const visit = function(f) {
-    return function(a) {
-      if ('name' in a) {
+const selectVisitF = function(selected) {
+  return function(visit) {
+    return function(d) {
+      if ('name' in d) {
         return;
       }
 
-      if (a.selected == selected) {
+      if (d.selected == selected) {
         return;
       }
 
-      f(a);
+      d.selected = selected;
+
+      switch (d.type) {
+        case 'node':
+          updateNodeFill(nodes.selectAll('#UUID-' + d.id).select('circle'));
+
+          // concurrent visits
+          for (const port of envObjectsByIdsIterable(d, 'portIds')) {
+            visit(port);
+          }
+
+          return;
+        case 'port':
+          const node = env[d.nodeId];
+
+          // concurrent visits
+          for (const edge of envObjectsByIdsIterable(d, 'edgeIds')) {
+            visit(edge);
+          }
+          visit(node);
+
+          return;
+        case 'edge':
+          updateEdgeStroke(edges.selectAll('#UUID-' + d.id));
+
+          // concurrent visits
+          for (const port of envObjectsByIdsIterable(d, 'portIds')) {
+            visit(port);
+          }
+
+          return;
+      }
     };
   };
+};
 
-  function nodeVisit(node) {
-    node.selected = selected;
-    updateNodeFill(nodes.selectAll('#UUID-' + node.id).select('circle'));
-
-    // concurrent visits
-    for (const port of envObjectsByIdsIterable(node, 'portIds')) {
-      visit(portVisit)(port);
-    }
-  }
-
-  function portVisit(port) {
-    port.selected = selected;
-
-    const node = env[port.nodeId];
-
-    // concurrent visits
-    for (const edge of envObjectsByIdsIterable(port, 'edgeIds')) {
-      visit(edgeVisit)(edge);
-    }
-    visit(nodeVisit)(node);
-  }
-
-  function edgeVisit(edge) {
-    edge.selected = selected;
-    updateEdgeStroke(edges.selectAll('#UUID-' + edge.id));
-
-    // concurrent visits
-    for (const port of envObjectsByIdsIterable(edge, 'portIds')) {
-      visit(portVisit)(port);
-    }
-  }
-
-  return {
-    node: visit(nodeVisit),
-    port: visit(portVisit),
-    edge: visit(edgeVisit),
-  };
-}
+const selectVisit = z(selectVisitF(true));
+const unselectVisit = z(selectVisitF(false));
 
 function edgeOver(e, d, i) {
-  selectVisitors(true).edge(d);
-  const text = equationVisitors(true).edge(d);
-  if (text === undefined) {
+  selectVisit(d);
+  const result = equationVisit(d.id);
+  if (result === undefined || result.name === undefined) {
     equation.text('');
   } else {
-    equation.text(text);
+    equation.text(result.name);
   }
   calculation.text(valueVisitors().edge(d));
 }
@@ -507,17 +535,16 @@ function edgeOver(e, d, i) {
 function edgeOut(e, d, i) {
   calculation.text('');
   equation.text('');
-  equationVisitors().edge(d);
-  selectVisitors(false).edge(d);
+  unselectVisit(d);
 }
 
 function nodeOver(e, d, i) {
-  selectVisitors(true).node(d);
-  const text = equationVisitors().node(d);
-  if (text === undefined) {
+  selectVisit(d);
+  const result = equationVisit(d.id);
+  if (result === undefined || result.name === undefined) {
     equation.text('');
   } else {
-    equation.text(text);
+    equation.text(result.name);
   }
   calculation.text(valueVisitors().node(d));
 }
@@ -525,8 +552,7 @@ function nodeOver(e, d, i) {
 function nodeOut(e, d, i) {
   calculation.text('');
   equation.text('');
-  equationVisitors().node(d);
-  selectVisitors(false).node(d);
+  unselectVisit(d);
 }
 
 function updateEdgePath(pathSelection) {
