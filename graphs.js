@@ -221,10 +221,7 @@ const graphs = {
       {
         point: [1, 1],
         name: '2',
-        value: 2,
-        float: {
-          value: 2,
-        },
+        float: 2,
         ports: [
           {
             point: [0, 1],
@@ -269,10 +266,7 @@ const graphs = {
       },
       {
         point: [1, 2],
-        name: '3',
-        value: {
-          float: 3,
-        },
+        float: '3',
         ports: [
           {
             point: [1, 0],
@@ -296,10 +290,7 @@ const graphs = {
       },
       {
         point: [3, 2],
-        name: '2',
-        value: {
-          float: 2,
-        },
+        float: '2',
         ports: [
           {
             point: [-1, 0],
@@ -321,9 +312,7 @@ const graphs = {
       {
         point: [1, 2],
         name: '3',
-        value: {
-          float: 3,
-        },
+        float: 3,
         ports: [
           {
             point: [1, 0],
@@ -348,9 +337,7 @@ const graphs = {
       {
         point: [3, 2],
         name: '2',
-        value: {
-          float: 2,
-        },
+        float: 2,
         ports: [
           {
             point: [-1, 0],
@@ -485,9 +472,7 @@ const graphs = {
       {
         point: [1, 1],
         name: '9',
-        value: {
-          float: 9,
-        },
+        float: 9,
         ports: [
           {
             point: [1, 0],
@@ -522,9 +507,7 @@ const graphs = {
       {
         point: [1, 3],
         name: '5',
-        value: {
-          float: 5,
-        },
+        float: 5,
         ports: [
           {
             point: [1, 0],
@@ -559,9 +542,7 @@ const graphs = {
       {
         point: [2, 4],
         name: '32',
-        value: {
-          float: 32,
-        },
+        float: 32,
         ports: [
           {
             point: [0, -1],
@@ -644,9 +625,6 @@ const graphs = {
         point: [4, 2],
         name: '2',
         float: 2,
-        value: {
-          float: 2,
-        },
         ports: [
           {
             point: [0, 1],
@@ -690,9 +668,6 @@ const graphs = {
         point: [1, 5],
         name: '4',
         float: 4,
-        value: {
-          float: 4,
-        },
         ports: [
           {
             point: [1, 0],
@@ -718,9 +693,6 @@ const graphs = {
         point: [4, 4],
         name: '5',
         float: 5,
-        value: {
-          float: 5,
-        },
         ports: [
           {
             point: [0, 1],
@@ -734,10 +706,7 @@ const graphs = {
       {
         point: [1, 1],
         name: '4',
-        value: 4,
-        value: {
-          float: 4,
-        },
+        float: 4,
         ports: [
           {
             point: [0, 1],
@@ -748,10 +717,7 @@ const graphs = {
       {
         point: [3, 1],
         name: '2',
-        value: 2,
-        value: {
-          float: 2,
-        },
+        float: 2,
         ports: [
           {
             point: [0, 1],
@@ -776,10 +742,7 @@ const graphs = {
       {
         point: [1, 3],
         name: '1',
-        value: 1,
-        value: {
-          float: 1,
-        },
+        float: 1,
         ports: [
           {
             point: [0, -1],
@@ -790,10 +753,7 @@ const graphs = {
       {
         point: [3, 3],
         name: '3',
-        value: 3,
-        value: {
-          float: 3,
-        },
+        float: 3,
         ports: [
           {
             point: [0, -1],
@@ -805,10 +765,7 @@ const graphs = {
       {
         point: [1, 4],
         name: '4',
-        value: 4,
-        value: {
-          float: 4,
-        },
+        float: 4,
         ports: [
           {
             point: [0, 1],
@@ -819,10 +776,7 @@ const graphs = {
       {
         point: [3, 4],
         name: '2',
-        value: 2,
-        value: {
-          float: 2,
-        },
+        float: 2,
         ports: [
           {
             point: [0, 1],
@@ -861,10 +815,7 @@ const graphs = {
       {
         point: [3, 6],
         name: '1',
-        value: 1,
-        value: {
-          float: 1,
-        },
+        float: 1,
         ports: [
           {
             point: [0, -1],
@@ -875,10 +826,7 @@ const graphs = {
       {
         point: [5, 6],
         name: '3',
-        value: 3,
-        value: {
-          float: 3,
-        },
+        float: 3,
         ports: [
           {
             point: [0, -1],
@@ -909,9 +857,7 @@ const graphs = {
     edge: [
       {
         point: [1, 1],
-        value: {
-          float: 2,
-        },
+        float: 2,
         ports: [
           {
             point: [1, 0],
@@ -921,9 +867,7 @@ const graphs = {
       },
       {
         point: [3, 1],
-        value: {
-          float: 3,
-        },
+        float: 3,
         ports: [
           {
             point: [-1, 0],

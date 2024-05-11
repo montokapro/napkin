@@ -71,158 +71,6 @@ const prettyNumber = function(number) {
   }
 };
 
-function valueVisitors() {
-  const visit = function(f, a) {
-    if ('value' in a) {
-      return a.value;
-    } else {
-      a.value = undefined; // visiting
-      a.value = f(a);
-      return a.value;
-    }
-  };
-
-  function nodeVisit(node) {
-    const portValues = [];
-    for (const port of envObjectsByIdsIterable(node, 'portIds')) {
-      const portResult = visit(portVisit, port);
-      if (portResult !== undefined) {
-        if (portResult.float !== undefined) {
-          portValues.push(portResult);
-        } else {
-          return portResult;
-        }
-      }
-    }
-
-    if (portValues.length === 0) {
-      return {float: undefined};
-    } else if (portValues.length === 1) {
-      return portValues[0];
-    } else {
-      // consider validating equality
-      return portValues[0];
-    }
-  }
-
-  function portVisit(port) {
-    const node = env[port.nodeId];
-
-    let operation;
-    if ('operator in node') {
-      operation = hyperlogarithmicOperations[node.operator];
-    }
-
-    let visitingPort = false;
-    const edgeValues = [];
-    for (const edge of envObjectsByIdsIterable(port, 'edgeIds')) {
-      const edgeResult = visit(edgeVisit, edge);
-      if (edgeResult !== undefined) {
-        if (edgeResult.float !== undefined) {
-          edgeValues.push(edgeResult);
-        } else {
-          return edgeResult;
-        }
-      } else {
-        visitingPort = true;
-      }
-    }
-
-    let edgeResult;
-    if (edgeValues.length === 0) {
-      if (visitingPort || operation === undefined) {
-        edgeResult = {float: undefined};
-      } else {
-        edgeResult = {
-          float: operation.identity,
-        };
-      }
-    } else if (edgeValues.length === 1) {
-      edgeResult = edgeValues[0];
-    } else {
-      const commutationSymbol = '=';
-      if (operation !== undefined) {
-        edgeResult = edgeValues.reduce(
-            operation.commutation.operation,
-            operation.identity,
-        );
-      } else {
-        edgeResult = edgeValues[0];
-      }
-    }
-
-    const nodeResult = visit(nodeVisit, node);
-
-    if (nodeResult === undefined) {
-      return edgeResult;
-    }
-
-    if (nodeResult.float === undefined) {
-      return nodeResult;
-    }
-
-    if (operation === undefined) {
-      return nodeResult;
-    }
-
-    if (edgeResult === undefined) {
-      return nodeResult;
-    }
-
-    return {
-      float: operation.reversion.operation(
-          nodeResult.float,
-          edgeResult.float,
-      ),
-    };
-  }
-
-  function edgeVisit(edge) {
-    const portValues = [];
-    for (const port of envObjectsByIdsIterable(edge, 'portIds')) {
-      const portResult = visit(portVisit, port);
-      if (portResult !== undefined) {
-        if (portResult.float !== undefined) {
-          portValues.push(portResult);
-        } else {
-          return portResult;
-        }
-      }
-    }
-
-    if (portValues.length === 0) {
-      return {float: undefined};
-    } else if (portValues.length === 1) {
-      return portValues[0];
-    } else {
-      // consider validating equality
-      return portValues[0];
-    }
-  }
-
-  const visitString = function(f) {
-    return function(a) {
-      const result = visit(f, a);
-
-      if (result === undefined) {
-        return '';
-      }
-
-      if (result.float === undefined) {
-        return '';
-      }
-
-      return result.float;
-    };
-  };
-
-  return {
-    node: visitString(nodeVisit),
-    port: visitString(portVisit),
-    edge: visitString(edgeVisit),
-  };
-}
-
 // Use strict fixed point combinator so that we can test steps independently
 // https://en.wikipedia.org/wiki/Fixed-point_combinator#Strict_fixed-point_combinator
 const z = function(f) {
@@ -237,11 +85,125 @@ const withStackTraceF = function(visit) {
     return function(focus) {
       trace.unshift(focus.id);
       const result = visit(focus);
+      console.log(focus);
+      console.log(result);
       trace.shift();
       return result;
     };
   };
 };
+
+const valueVisitF = function(visit) {
+  return function(trace) {
+    const go = function(focus) {
+      const traceVisit = visit(trace);
+
+      switch (focus.type) {
+        case 'node':
+        case 'edge':
+          const portValues = [];
+          for (const portId of objectIterable(focus, 'portIds')) {
+          // TODO: check only previous port, otherwise assume cycle
+            if (!trace.includes(portId)) {
+              portValues.push(traceVisit(portId));
+            }
+          }
+
+          // Consider checking for inequalities.
+          return portValues.find((v) => v !== undefined);
+        case 'port':
+          const node = env[focus.nodeId];
+
+          let operation;
+          if ('operator' in node) {
+            const operation = hyperlogarithmicOperations[node.operator];
+
+            const commutationOperation = operation.commutation.operation;
+            const commutationValue = function(values) {
+              return values.reduce(commutationOperation, operation.identity);
+            };
+
+            // TODO: check only previous edge, otherwise possible cycle
+            let fromEdgeId;
+            const edgeValues = [];
+            for (const edgeId of objectIterable(focus, 'edgeIds')) {
+              if (trace.includes(edgeId)) {
+                if (fromEdgeId === undefined) {
+                  fromEdgeId = edgeId;
+                } else {
+                  return undefined;
+                }
+              } else {
+                const result = traceVisit(edgeId);
+                if (result === undefined) {
+                  return undefined;
+                }
+                edgeValues.push(result);
+              }
+            }
+
+            // TODO: check only previous node, otherwise possible cycle
+            let fromNodeId;
+            const nodeValues = [];
+            if (trace.includes(focus.nodeId)) {
+              if (fromEdgeId === undefined) {
+                fromNodeId = focus.nodeId;
+              } else {
+                return undefined;
+              }
+            } else {
+              const result = traceVisit(focus.nodeId);
+              if (result === undefined) {
+                return undefined;
+              }
+              nodeValues.push(result);
+            }
+
+            const edgeValue = commutationValue(edgeValues);
+            const nodeValue = commutationValue(nodeValues);
+
+            const reversionOperation = operation.reversion.operation;
+
+            if (fromNodeId !== undefined) {
+              return reversionOperation(edgeValue, nodeValue);
+            } else if (fromEdgeId !== undefined) {
+              return reversionOperation(nodeValue, edgeValue);
+            } else {
+              // Consider checking for inequalities.
+              return [edgeValue, nodeValue].find((v) => v !== undefined);
+            }
+          } else {
+            const values = [];
+            // TODO: check only previous edge, otherwise possible cycle
+            for (const edgeId of objectIterable(focus, 'edgeIds')) {
+              if (!trace.includes(edgeId)) {
+                values.push(traceVisit(edgeId));
+              }
+            }
+            // TODO: check only previous node, otherwise possible cycle
+            if (!trace.includes(focus.nodeId)) {
+              values.push(traceVisit(focus.nodeId));
+            }
+
+            // Consider checking for inequalities.
+            return values.find((v) => v !== undefined);
+          }
+      }
+    };
+
+    return function(focusId) {
+      const focus = env[focusId];
+
+      if ('float' in focus) {
+        return focus['float'];
+      }
+
+      return withStackTraceF(go)(trace)(focus);
+    };
+  };
+};
+
+const valueVisit = z(valueVisitF)([]);
 
 const equationVisitF = function(visit) {
   return function(trace) {
@@ -255,7 +217,11 @@ const equationVisitF = function(visit) {
           for (const portId of objectIterable(focus, 'portIds')) {
           // TODO: check only previous port, otherwise assume cycle
             if (!trace.includes(portId)) {
-              portEquations.push(traceVisit(portId));
+              const result = traceVisit(portId);
+              if (result === undefined) {
+                return undefined;
+              }
+              portEquations.push(result);
             }
           }
 
@@ -348,6 +314,10 @@ const equationVisitF = function(visit) {
                 default:
                   nodeEquations.unshift(edgeEquation);
 
+                  if (nodeEquations.includes(undefined)) {
+                    return undefined;
+                  }
+
                   const reversionSymbol = operation.reversion.symbol;
                   return {
                     operator: node.operator,
@@ -379,6 +349,10 @@ const equationVisitF = function(visit) {
                   return nodeEquation;
                 default:
                   edgeEquations.unshift(nodeEquation);
+
+                  if (edgeEquations.includes(undefined)) {
+                    return undefined;
+                  }
 
                   const reversionSymbol = operation.reversion.symbol;
                   return {
@@ -429,12 +403,20 @@ const equationVisitF = function(visit) {
             // TODO: check only previous edge, otherwise possible cycle
             for (const edgeId of objectIterable(focus, 'edgeIds')) {
               if (!trace.includes(edgeId)) {
-                equations.push(traceVisit(edgeId));
+                const result = traceVisit(edgeId);
+                if (result === undefined) {
+                  return undefined;
+                }
+                equations.push(result);
               }
             }
             // TODO: check only previous node, otherwise possible cycle
             if (!trace.includes(focus.nodeId)) {
-              equations.push(traceVisit(focus.nodeId));
+              const result = traceVisit(focus.nodeId);
+              if (result === undefined) {
+                return undefined;
+              }
+              equations.push(result);
             }
 
             switch (equations.length) {
@@ -523,13 +505,18 @@ const unselectVisit = z(selectVisitF(false));
 
 function edgeOver(e, d, i) {
   selectVisit(d);
-  const result = equationVisit(d.id);
-  if (result === undefined || result.name === undefined) {
+  const equationResult = equationVisit(d.id);
+  if (equationResult === undefined || equationResult.name === undefined) {
     equation.text('');
   } else {
-    equation.text(result.name);
+    equation.text(equationResult.name);
   }
-  calculation.text(valueVisitors().edge(d));
+  const valueResult = valueVisit(d.id);
+  if (valueResult === undefined) {
+    calculation.text('');
+  } else {
+    calculation.text(valueResult);
+  }
 }
 
 function edgeOut(e, d, i) {
@@ -540,13 +527,18 @@ function edgeOut(e, d, i) {
 
 function nodeOver(e, d, i) {
   selectVisit(d);
-  const result = equationVisit(d.id);
-  if (result === undefined || result.name === undefined) {
+  const equationResult = equationVisit(d.id);
+  if (equationResult === undefined || equationResult.name === undefined) {
     equation.text('');
   } else {
-    equation.text(result.name);
+    equation.text(equationResult.name);
   }
-  calculation.text(valueVisitors().node(d));
+  const valueResult = valueVisit(d.id);
+  if (valueResult === undefined) {
+    calculation.text('');
+  } else {
+    calculation.text(valueResult);
+  }
 }
 
 function nodeOut(e, d, i) {
