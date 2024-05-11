@@ -10,10 +10,20 @@
   <!-- Initialize a select button -->
   <select style="display: inline; font-family: Roboto Mono, sans-serif;" id="graphSelect"></select>
 
-  <p style="display: inline; text-align: right; font-family: Roboto Mono, sans-serif;"> | </p>
-  <p style="display: inline; text-align: right; font-family: Roboto Mono, sans-serif;" id="equation"></p>
-  <p style="display: inline; text-align: right; font-family: Roboto Mono, sans-serif;"> | </p>
-  <p style="display: inline; text-align: right; font-family: Roboto Mono, sans-serif;" id="calculation"></
+  <label for="equation">Equation:</label>
+  <input
+    type="text"
+    id="equation"
+    name="equation"
+    style="display: inline; text-align: right; font-family: Roboto Mono, sans-serif;"
+  ></input>
+  <label for="calculation">Calculation:</label>
+  <input
+    type="text"
+    id="calculation"
+    name="calculation"
+    style="display: inline; text-align: right; font-family: Roboto Mono, sans-serif;"
+  ></input>
 
   <!-- Create a div where the graph will take place -->
   <div id="display"></div>

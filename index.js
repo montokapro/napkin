@@ -17,9 +17,9 @@ let clickedPortId;
 let clickedNodeId;
 let draggedNode;
 
-const equation = d3.select('#equation');
-const calculation = d3.select('#calculation');
-const display = d3.select('#display');
+const equationSelection = d3.select('#equation');
+const calculationSelection = d3.select('#calculation');
+const displaySelection = d3.select('#display');
 
 function graphClick() {
   clickedEdgeId = null;
@@ -38,7 +38,7 @@ const zoom = d3.zoom()
     .on('zoom', handleZoom);
 
 // https://www.d3indepth.com/zoom-and-pan/
-const svg = display
+const svg = displaySelection
     .append('svg')
     .attr('width', '100vw')
     .attr('height', '100vh')
@@ -507,21 +507,21 @@ function edgeOver(e, d, i) {
   selectVisit(d);
   const equationResult = equationVisit(d.id);
   if (equationResult === undefined || equationResult.name === undefined) {
-    equation.text('');
+    equationSelection.property('value', '');
   } else {
-    equation.text(equationResult.name);
+    equationSelection.property('value', equationResult.name);
   }
   const valueResult = valueVisit(d.id);
   if (valueResult === undefined) {
-    calculation.text('');
+    calculationSelection.property('value', '');
   } else {
-    calculation.text(valueResult);
+    calculationSelection.property('value', valueResult);
   }
 }
 
 function edgeOut(e, d, i) {
-  calculation.text('');
-  equation.text('');
+  calculationSelection.property('value', '');
+  equationSelection.property('value', '');
   unselectVisit(d);
 }
 
@@ -529,21 +529,21 @@ function nodeOver(e, d, i) {
   selectVisit(d);
   const equationResult = equationVisit(d.id);
   if (equationResult === undefined || equationResult.name === undefined) {
-    equation.text('');
+    equationSelection.property('value', '');
   } else {
-    equation.text(equationResult.name);
+    equationSelection.property('value', equationResult.name);
   }
   const valueResult = valueVisit(d.id);
   if (valueResult === undefined) {
-    calculation.text('');
+    calculationSelection.property('value', '');
   } else {
-    calculation.text(valueResult);
+    calculationSelection.property('value', valueResult);
   }
 }
 
 function nodeOut(e, d, i) {
-  calculation.text('');
-  equation.text('');
+  calculationSelection.property('value', '');
+  equationSelection.property('value', '');
   unselectVisit(d);
 }
 
@@ -893,8 +893,8 @@ function updateNode(groupSelection) {
 }
 
 function update() {
-  equation.text('');
-  calculation.text('foo');
+  equationSelection.property('value', '');
+  calculationSelection.property('value', '');
 
   edges
       .selectAll('.edge')
