@@ -7,24 +7,30 @@
   <script type="module" src="index.js"></script>
 </head>
 <body>
-  <!-- Initialize a select button -->
-  <select style="display: inline; font-family: Roboto Mono, sans-serif;" id="graphSelect"></select>
+  <div style="display: inline;">
+    <select style="font-family: Roboto Mono, sans-serif;" id="graphSelect"></select>
+  </div>
 
-  <label for="equation">Equation:</label>
-  <input
-    type="text"
-    id="equation"
-    name="equation"
-    style="display: inline; text-align: right; font-family: Roboto Mono, sans-serif;"
-  ></input>
-  <label for="calculation">Calculation:</label>
-  <input
-    type="text"
-    id="calculation"
-    name="calculation"
-    style="display: inline; text-align: right; font-family: Roboto Mono, sans-serif;"
-  ></input>
+  <div style="display: inline;">
+    <label for="equation">Equation:</label>
+    <input
+      type="text"
+      id="equation"
+      name="equation"
+      width="100%"
+      style="font-family: Roboto Mono, sans-serif;"
+    ></input>
+  </div>
 
-  <!-- Create a div where the graph will take place -->
+  <div style="display: inline;">
+    <label for="calculation">Calculation:</label>
+    <input
+      type="text"
+      id="calculation"
+      name="calculation"
+      style="font-family: Roboto Mono, sans-serif;"
+    ></input>
+  </div>
+
   <div id="display"></div>
 </body>
