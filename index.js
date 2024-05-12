@@ -48,7 +48,7 @@ calculationSelection.on('input', function(d) {
   });
 });
 
-function graphClick() {
+const graphClick = function() {
   Object.entries(env).forEach((e) => delete e[1].selected);
 
   updateNodeFill(nodeSelection.selectAll('.node').select('circle'));
@@ -56,12 +56,12 @@ function graphClick() {
   updateEdgeStroke(edgeSelection.selectAll('.edge'));
 
   updatePortVisible(nodeSelection.selectAll('.node').selectAll('.port'));
-}
+};
 
-function handleZoom(e) {
+const handleZoom = function(e) {
   d3.select('#image')
       .attr('transform', e.transform);
-}
+};
 
 const zoom = d3.zoom()
     .on('zoom', handleZoom);
@@ -480,7 +480,7 @@ const equationVisitF = function(visit) {
 
 const equationVisit = z(equationVisitF)([]);
 
-function edgeOver(e, d, i) {
+const edgeOver = function(e, d, i) {
   const equationResult = equationVisit(d.id);
   if (equationResult === undefined || equationResult.name === undefined) {
     equationSelection.property('value', '');
@@ -493,14 +493,14 @@ function edgeOver(e, d, i) {
   } else {
     calculationSelection.property('value', valueResult);
   }
-}
+};
 
-function edgeOut(e, d, i) {
+const edgeOut = function(e, d, i) {
   calculationSelection.property('value', '');
   equationSelection.property('value', '');
-}
+};
 
-function nodeOver(e, d, i) {
+const nodeOver = function(e, d, i) {
   const equationResult = equationVisit(d.id);
   if (equationResult === undefined || equationResult.name === undefined) {
     equationSelection.property('value', '');
@@ -513,14 +513,14 @@ function nodeOver(e, d, i) {
   } else {
     calculationSelection.property('value', valueResult);
   }
-}
+};
 
-function nodeOut(e, d, i) {
+const nodeOut = function(e, d, i) {
   calculationSelection.property('value', '');
   equationSelection.property('value', '');
-}
+};
 
-function updateEdgePath(pathSelection) {
+const updateEdgePath = function(pathSelection) {
   return pathSelection
       .attr('d', function(d) {
         const sourcePort = env[d['portIds'][0]];
@@ -543,9 +543,9 @@ function updateEdgePath(pathSelection) {
         );
         return path.toString();
       });
-}
+};
 
-function updateEdgeStroke(pathSelection) {
+const updateEdgeStroke = function(pathSelection) {
   return pathSelection
       .attr('stroke', function(d) {
         if (d.selected) {
@@ -554,9 +554,9 @@ function updateEdgeStroke(pathSelection) {
           return '#FF928B';
         }
       });
-}
+};
 
-function enterEdge(selection) {
+const enterEdge = function(selection) {
   const pathSelection = selection.append('path');
 
   pathSelection
@@ -573,13 +573,13 @@ function enterEdge(selection) {
       .on('mouseover', edgeOver)
       .on('mouseout', edgeOut)
       .on('click', edgeClick);
-}
+};
 
-function updateEdge(pathSelection) {
+const updateEdge = function(pathSelection) {
   updateEdgeStroke(pathSelection);
 
   return pathSelection;
-}
+};
 
 // Respond to right click
 // https://github.com/d3/d3-drag/blob/v3.0.0/src/drag.js#L8-L11
@@ -632,7 +632,7 @@ const duplicateNode = function(originalNode, originalPort) {
   return duplicateNode;
 };
 
-function updateNodePoint(event, d) {
+const updateNodePoint = function(event, d) {
   d.point = [event.x, event.y];
 
   nodeSelection.selectAll('#UUID-' + d.id)
@@ -655,10 +655,10 @@ function updateNodePoint(event, d) {
   };
 
   updateEdgePath(d3.selectAll('.edge').filter(includePortId));
-}
+};
 
 // https://stackoverflow.com/questions/28102089/simple-graph-of-nodes-and-links-without-using-force-layout
-function nodeDragStarted(event, d) {
+const nodeDragStarted = function(event, d) {
   if (event.sourceEvent.button === 2) {
     draggedNode = duplicateNode(d, undefined);
   } else {
@@ -666,23 +666,23 @@ function nodeDragStarted(event, d) {
   }
 
   nodeSelection.selectAll('#UUID-' + draggedNode.id).attr('cursor', 'grabbing');
-}
+};
 
-function nodeDragged(event, d) {
+const nodeDragged = function(event, d) {
   if (draggedNode === undefined) {
     updateNodePoint(event, d);
   } else {
     updateNodePoint(event, draggedNode);
   }
-}
+};
 
-function nodeDragEnded(event, d) {
+const nodeDragEnded = function(event, d) {
   nodeSelection.selectAll('#UUID-' + draggedNode.id).attr('cursor', 'grab');
 
   draggedNode = undefined;
-}
+};
 
-function updatePortPoint(event, d, self) {
+const updatePortPoint = function(event, d, self) {
   d.point = [event.x, event.y];
 
   d3.select(self)
@@ -694,17 +694,17 @@ function updatePortPoint(event, d, self) {
   };
 
   updateEdgePath(d3.selectAll('.edge').filter(includePortId));
-}
+};
 
-function portDragStarted(event, d) {
+const portDragStarted = function(event, d) {
   if (event.sourceEvent.button === 2) {
     const node = env[d.nodeId];
 
     draggedNode = duplicateNode(node, d);
   }
-}
+};
 
-function portDragged(event, d) {
+const portDragged = function(event, d) {
   if (draggedNode === undefined) {
     updatePortPoint(event, d, this);
   } else {
@@ -717,13 +717,13 @@ function portDragged(event, d) {
 
     updateNodePoint(point, draggedNode);
   }
-}
+};
 
-function portDragEnded(event, d) {
+const portDragEnded = function(event, d) {
   draggedNode = undefined;
-}
+};
 
-function updatePortFill(circleSelection) {
+const updatePortFill = function(circleSelection) {
   circleSelection
       .style('fill', function(d) {
         if (d.selected) {
@@ -734,9 +734,9 @@ function updatePortFill(circleSelection) {
       });
 
   return circleSelection;
-}
+};
 
-function updatePortVisible(circleSelection) {
+const updatePortVisible = function(circleSelection) {
   circleSelection
       .style('display', function(d) {
         const node = env[d.nodeId];
@@ -744,9 +744,9 @@ function updatePortVisible(circleSelection) {
       });
 
   return circleSelection;
-}
+};
 
-function enterPort(groupSelection) {
+const enterPort = function(groupSelection) {
   const circleSelection = groupSelection.append('circle');
 
   circleSelection
@@ -769,43 +769,43 @@ function enterPort(groupSelection) {
   updatePortVisible(circleSelection);
 
   return circleSelection;
-}
+};
 
-function updatePort(circleSelection) {
+const updatePort = function(circleSelection) {
   updatePortFill(circleSelection);
   updatePortVisible(circleSelection);
 
   return circleSelection;
-}
+};
 
-function dataSelect(data) {
+const dataSelect = function(data) {
   if (data.selected) {
     delete data.selected;
   } else {
     data.selected = true;
   }
-}
+};
 
-function nodeClick(e, d) {
+const nodeClick = function(e, d) {
   dataSelect(d);
   updateColor(d);
   updatePortVisible(d3.select(this).selectAll('.port'));
   e.stopPropagation();
-}
+};
 
-function portClick(e, d) {
+const portClick = function(e, d) {
   dataSelect(d);
   updateColor(d);
   e.stopPropagation();
-}
+};
 
-function edgeClick(e, d) {
+const edgeClick = function(e, d) {
   dataSelect(d);
   updateColor(d);
   e.stopPropagation();
-}
+};
 
-function updateNodeFill(circleSelection) {
+const updateNodeFill = function(circleSelection) {
   circleSelection
       .style('fill', function(d) {
         if ('name' in d) {
@@ -824,7 +824,7 @@ function updateNodeFill(circleSelection) {
       });
 
   return circleSelection;
-}
+};
 
 const updateColor = function(data) {
   switch (data.type) {
@@ -864,7 +864,7 @@ const updateName = function(data) {
   }
 };
 
-function enterNode(selection) {
+const enterNode = function(selection) {
   const groupSelection = selection.append('g')
       .attr('id', (d) => 'UUID-' + d.id)
       .attr('class', 'node')
@@ -909,15 +909,15 @@ function enterNode(selection) {
       .join(enterPort, updatePort);
 
   return groupSelection;
-}
+};
 
-function updateNode(groupSelection) {
+const updateNode = function(groupSelection) {
   updateNodeFill(groupSelection.select('.nodeCircle'));
 
   return groupSelection;
-}
+};
 
-function update() {
+const update = function() {
   equationSelection.property('value', '');
   calculationSelection.property('value', '');
 
@@ -930,9 +930,9 @@ function update() {
       .selectAll('.node')
       .data(Object.entries(env).filter((a) => a[1].type == 'node').map((a) => a[1]), (node) => node.id)
       .join(enterNode, updateNode);
-}
+};
 
-function selectGraph(outerId, innerId) {
+const selectGraph = function(outerId, innerId) {
   const outer = graphs[outerId];
   const inner = outer[innerId];
 
@@ -978,7 +978,7 @@ function selectGraph(outerId, innerId) {
       addToArray('portIds')(node, port.id);
     }
   };
-}
+};
 
 const graphSelection = d3.select('#graphSelect');
 
