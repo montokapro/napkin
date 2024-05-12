@@ -12,9 +12,6 @@ const scale = 128;
 
 let env;
 let envObjectsByIdsIterable;
-let clickedEdgeId;
-let clickedPortId;
-let clickedNodeId;
 let draggedNode;
 
 const equationSelection = d3.select('#equation');
@@ -22,9 +19,11 @@ const calculationSelection = d3.select('#calculation');
 const displaySelection = d3.select('#display');
 
 function graphClick() {
-  clickedEdgeId = null;
-  clickedNodeId = null;
-  clickedPortId = null;
+  Object.entries(env).forEach((e) => delete e[1].selected);
+
+  updateNodeFill(nodes.selectAll('.node').select('circle'));
+  updatePortFill(nodes.selectAll('.node').selectAll('.port'));
+  updateEdgeStroke(edges.selectAll('.edge'));
 
   updatePortVisible(nodes.selectAll('.node').selectAll('.port'));
 }
@@ -85,8 +84,6 @@ const withStackTraceF = function(visit) {
     return function(focus) {
       trace.unshift(focus.id);
       const result = visit(focus);
-      console.log(focus);
-      console.log(result);
       trace.shift();
       return result;
     };
@@ -453,58 +450,7 @@ const equationVisitF = function(visit) {
 
 const equationVisit = z(equationVisitF)([]);
 
-const selectVisitF = function(selected) {
-  return function(visit) {
-    return function(d) {
-      if ('name' in d) {
-        return;
-      }
-
-      if (d.selected == selected) {
-        return;
-      }
-
-      d.selected = selected;
-
-      switch (d.type) {
-        case 'node':
-          updateNodeFill(nodes.selectAll('#UUID-' + d.id).select('circle'));
-
-          // concurrent visits
-          for (const port of envObjectsByIdsIterable(d, 'portIds')) {
-            visit(port);
-          }
-
-          return;
-        case 'port':
-          const node = env[d.nodeId];
-
-          // concurrent visits
-          for (const edge of envObjectsByIdsIterable(d, 'edgeIds')) {
-            visit(edge);
-          }
-          visit(node);
-
-          return;
-        case 'edge':
-          updateEdgeStroke(edges.selectAll('#UUID-' + d.id));
-
-          // concurrent visits
-          for (const port of envObjectsByIdsIterable(d, 'portIds')) {
-            visit(port);
-          }
-
-          return;
-      }
-    };
-  };
-};
-
-const selectVisit = z(selectVisitF(true));
-const unselectVisit = z(selectVisitF(false));
-
 function edgeOver(e, d, i) {
-  selectVisit(d);
   const equationResult = equationVisit(d.id);
   if (equationResult === undefined || equationResult.name === undefined) {
     equationSelection.property('value', '');
@@ -522,11 +468,9 @@ function edgeOver(e, d, i) {
 function edgeOut(e, d, i) {
   calculationSelection.property('value', '');
   equationSelection.property('value', '');
-  unselectVisit(d);
 }
 
 function nodeOver(e, d, i) {
-  selectVisit(d);
   const equationResult = equationVisit(d.id);
   if (equationResult === undefined || equationResult.name === undefined) {
     equationSelection.property('value', '');
@@ -544,7 +488,6 @@ function nodeOver(e, d, i) {
 function nodeOut(e, d, i) {
   calculationSelection.property('value', '');
   equationSelection.property('value', '');
-  unselectVisit(d);
 }
 
 function updateEdgePath(pathSelection) {
@@ -598,7 +541,8 @@ function enterEdge(selection) {
 
   return pathSelection
       .on('mouseover', edgeOver)
-      .on('mouseout', edgeOut);
+      .on('mouseout', edgeOut)
+      .on('click', edgeClick);
 }
 
 function updateEdge(pathSelection) {
@@ -752,7 +696,7 @@ function portDragEnded(event, d) {
 function updatePortFill(circleSelection) {
   circleSelection
       .style('fill', function(d) {
-        if (d.id === clickedPortId) {
+        if (d.selected) {
           return '#DFFFD1';
         } else {
           return '#CDEAC0';
@@ -765,7 +709,8 @@ function updatePortFill(circleSelection) {
 function updatePortVisible(circleSelection) {
   circleSelection
       .style('display', function(d) {
-        return d.nodeId === clickedNodeId ? 'block' : 'none';
+        const node = env[d.nodeId];
+        return node.selected ? 'block' : 'none';
       });
 
   return circleSelection;
@@ -781,6 +726,7 @@ function enterPort(groupSelection) {
       .attr('cx', (d) => d.point[0])
       .attr('cy', (d) => d.point[1])
       .style('stroke-width', 0)
+      .on('click', portClick)
       .call(
           d3.drag()
               .filter(dragFilter)
@@ -802,11 +748,30 @@ function updatePort(circleSelection) {
   return circleSelection;
 }
 
+function dataSelect(data) {
+  if (data.selected) {
+    delete data.selected;
+  } else {
+    data.selected = true;
+  }
+}
+
 function nodeClick(e, d) {
-  clickedNodeId = d.id;
-
+  dataSelect(d);
+  updateColor(d);
   updatePortVisible(d3.select(this).selectAll('.port'));
+  e.stopPropagation();
+}
 
+function portClick(e, d) {
+  dataSelect(d);
+  updateColor(d);
+  e.stopPropagation();
+}
+
+function edgeClick(e, d) {
+  dataSelect(d);
+  updateColor(d);
   e.stopPropagation();
 }
 
@@ -814,7 +779,7 @@ function updateNodeFill(circleSelection) {
   circleSelection
       .style('fill', function(d) {
         if ('name' in d) {
-          if (d.id === clickedNodeId) {
+          if (d.selected) {
             return '#DFFFD1';
           } else {
             return '#CDEAC0';
@@ -830,6 +795,20 @@ function updateNodeFill(circleSelection) {
 
   return circleSelection;
 }
+
+const updateColor = function(data) {
+  switch (data.type) {
+    case 'node':
+      updateNodeFill(nodes.selectAll('#UUID-' + data.id).select('circle'));
+      break;
+    case 'port':
+      updatePortFill(nodes.selectAll('#UUID-' + data.id));
+      break;
+    case 'edge':
+      updateEdgeStroke(edges.selectAll('#UUID-' + data.id));
+      break;
+  }
+};
 
 function enterNode(selection) {
   const groupSelection = selection.append('g')
@@ -913,9 +892,6 @@ function selectGraph(outerId, innerId) {
 
   env = {};
   envObjectsByIdsIterable = objectsByIdsIterable(env);
-  clickedEdgeId = null;
-  clickedPortId = null;
-  clickedNodeId = null;
 
   const edges = {};
   for (const nodeData of inner) {
