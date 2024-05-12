@@ -18,14 +18,44 @@ const equationSelection = d3.select('#equation');
 const calculationSelection = d3.select('#calculation');
 const displaySelection = d3.select('#display');
 
+equationSelection.on('input', function(d) {
+  const value = this.value;
+  Object.entries(env).forEach(function(entry) {
+    const data = entry[1];
+    if (data.selected) {
+      if (value === '') {
+        delete data.name;
+      } else {
+        data.name = value;
+      }
+      updateName(data);
+    }
+  });
+});
+
+calculationSelection.on('input', function(d) {
+  const value = this.value;
+  Object.entries(env).forEach(function(entry) {
+    const data = entry[1];
+    if (data.selected) {
+      const float = parseFloat(value);
+      if (isNaN(float)) {
+        delete data.float;
+      } else {
+        data.float = float;
+      }
+    }
+  });
+});
+
 function graphClick() {
   Object.entries(env).forEach((e) => delete e[1].selected);
 
-  updateNodeFill(nodes.selectAll('.node').select('circle'));
-  updatePortFill(nodes.selectAll('.node').selectAll('.port'));
-  updateEdgeStroke(edges.selectAll('.edge'));
+  updateNodeFill(nodeSelection.selectAll('.node').select('circle'));
+  updatePortFill(nodeSelection.selectAll('.node').selectAll('.port'));
+  updateEdgeStroke(edgeSelection.selectAll('.edge'));
 
-  updatePortVisible(nodes.selectAll('.node').selectAll('.port'));
+  updatePortVisible(nodeSelection.selectAll('.node').selectAll('.port'));
 }
 
 function handleZoom(e) {
@@ -37,7 +67,7 @@ const zoom = d3.zoom()
     .on('zoom', handleZoom);
 
 // https://www.d3indepth.com/zoom-and-pan/
-const svg = displaySelection
+const svgSelection = displaySelection
     .append('svg')
     .attr('width', '100vw')
     .attr('height', '100vh')
@@ -45,17 +75,17 @@ const svg = displaySelection
     .call(zoom.transform, d3.zoomIdentity.scale(scale))
     .on('click', graphClick);
 
-const image = svg
+const imageSelection = svgSelection
     .append('g')
     .attr('id', 'image')
     .attr('transform', 'scale(' + scale + ')')
     .style('pointer-events', 'all');
 
-const edges = image
+const edgeSelection = imageSelection
     .append('g')
     .attr('id', 'edges');
 
-const nodes = image
+const nodeSelection = imageSelection
     .append('g')
     .attr('id', 'nodes');
 
@@ -585,7 +615,7 @@ const duplicateNode = function(originalNode, originalPort) {
 
       duplicatePort.edgeIds = [edge.id];
 
-      edges
+      edgeSelection
           .selectAll('.edge')
           .select('#UUID-' + edge.id)
           .data([edge], (edge) => edge.id)
@@ -593,7 +623,7 @@ const duplicateNode = function(originalNode, originalPort) {
     }
   }
 
-  nodes
+  nodeSelection
       .selectAll('.node')
       .select('#UUID-' + duplicateNode.id)
       .data([duplicateNode], (node) => node.id)
@@ -605,7 +635,7 @@ const duplicateNode = function(originalNode, originalPort) {
 function updateNodePoint(event, d) {
   d.point = [event.x, event.y];
 
-  nodes.selectAll('#UUID-' + d.id)
+  nodeSelection.selectAll('#UUID-' + d.id)
       .attr('transform', 'translate(' + d.point[0] + ',' + d.point[1] + ')');
 
   const nodePortIds = Array.from(objectIterable(d, 'portIds'));
@@ -635,7 +665,7 @@ function nodeDragStarted(event, d) {
     draggedNode = d;
   }
 
-  nodes.selectAll('#UUID-' + draggedNode.id).attr('cursor', 'grabbing');
+  nodeSelection.selectAll('#UUID-' + draggedNode.id).attr('cursor', 'grabbing');
 }
 
 function nodeDragged(event, d) {
@@ -647,7 +677,7 @@ function nodeDragged(event, d) {
 }
 
 function nodeDragEnded(event, d) {
-  nodes.selectAll('#UUID-' + draggedNode.id).attr('cursor', 'grab');
+  nodeSelection.selectAll('#UUID-' + draggedNode.id).attr('cursor', 'grab');
 
   draggedNode = undefined;
 }
@@ -799,13 +829,37 @@ function updateNodeFill(circleSelection) {
 const updateColor = function(data) {
   switch (data.type) {
     case 'node':
-      updateNodeFill(nodes.selectAll('#UUID-' + data.id).select('circle'));
+      updateNodeFill(nodeSelection.selectAll('#UUID-' + data.id).select('circle'));
       break;
     case 'port':
-      updatePortFill(nodes.selectAll('#UUID-' + data.id));
+      updatePortFill(nodeSelection.selectAll('#UUID-' + data.id));
       break;
     case 'edge':
-      updateEdgeStroke(edges.selectAll('#UUID-' + data.id));
+      updateEdgeStroke(edgeSelection.selectAll('#UUID-' + data.id));
+      break;
+  }
+};
+
+const updateNodeText = function(textSelection) {
+  textSelection.text(function(d) {
+    // if (d.value != null) {
+    //   return d.value.toString();
+    // } else
+    if ('operator' in d) {
+      return hyperlogarithmicOperations[d.operator].commutation.symbol;
+    } else {
+      return d.name;
+    }
+  });
+
+  return textSelection;
+};
+
+const updateName = function(data) {
+  switch (data.type) {
+    case 'node':
+      updateNodeText(nodeSelection.selectAll('g').selectAll('text'));
+      updateNodeFill(nodeSelection.selectAll('#UUID-' + data.id).select('circle'));
       break;
   }
 };
@@ -837,17 +891,9 @@ function enterNode(selection) {
 
   updateNodeFill(circleSelection);
 
-  groupSelection.append('text')
-      .text(function(d) {
-        // if (d.value != null) {
-        //   return d.value.toString();
-        // } else
-        if ('operator' in d) {
-          return hyperlogarithmicOperations[d.operator].commutation.symbol;
-        } else {
-          return d.name;
-        }
-      })
+  updateNodeText(groupSelection.append('text'));
+
+  groupSelection
       .style('font-family', 'Roboto Mono, sans-serif')
       .style('font-weight', 'bold')
       .style('font-size', '0.25px')
@@ -875,12 +921,12 @@ function update() {
   equationSelection.property('value', '');
   calculationSelection.property('value', '');
 
-  edges
+  edgeSelection
       .selectAll('.edge')
       .data(Object.entries(env).filter((a) => a[1].type == 'edge').map((a) => a[1]), (edge) => edge.id)
       .join(enterEdge, updateEdge);
 
-  nodes
+  nodeSelection
       .selectAll('.node')
       .data(Object.entries(env).filter((a) => a[1].type == 'node').map((a) => a[1]), (node) => node.id)
       .join(enterNode, updateNode);
@@ -934,9 +980,9 @@ function selectGraph(outerId, innerId) {
   };
 }
 
-const graphSelect = d3.select('#graphSelect');
+const graphSelection = d3.select('#graphSelect');
 
-const optgroups = graphSelect
+const optgroups = graphSelection
     .selectAll('optgroup')
     .data(Object.entries(graphs))
     .join((enter) => enter
@@ -955,7 +1001,7 @@ optgroups.each(function(outerPair) {
       );
 });
 
-graphSelect
+graphSelection
     .on('change', function() {
       const selectedOption = d3.select(this).property('value');
 
