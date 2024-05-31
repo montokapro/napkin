@@ -52,7 +52,7 @@ const hyperlogarithmicOperations = [
       name: 'multiplication',
       symbol: '×',
       operation: (a, b) => {
-        return a + b;
+        return a * b;
       },
     },
     reversion: {
