@@ -4,12 +4,16 @@ import assert from 'assert';
 
 // Note that any two nodes may have at most one edge between them.
 describe('#evaluate', () => {
-  it('empty', () => {
+  it('no edge', () => {
     assert.deepEqual(
         evaluate(
             {
-              'a': {},
-              'b': {},
+              'a': {
+                env: {}
+              },
+              'b': {
+                env: {}
+              },
             },
         ),
         {
@@ -24,10 +28,14 @@ describe('#evaluate', () => {
         evaluate(
             {
               'a': {
-                eqs: ['b'],
+                env: {
+                  'b': false,
+                },
               },
               'b': {
-                eqs: ['a'],
+                env: {
+                  'a': false,
+                },
               },
             },
         ),
@@ -43,10 +51,14 @@ describe('#evaluate', () => {
         evaluate(
             {
               'a': {
-                ops: ['b'],
+                env: {
+                  'b': true,
+                },
               },
               'b': {
-                ops: ['a'],
+                env: {
+                  'a': true,
+                },
               },
             },
         ),
@@ -59,18 +71,26 @@ describe('#evaluate', () => {
         evaluate(
             {
               'a': {
-                eqs: ['b'],
+                env: {
+                  'b': false,
+                },
               },
               'b': {
-                eqs: ['a'],
-                ops: ['c'],
+                env: {
+                  'a': false,
+                  'c': true,
+                },
               },
               'c': {
-                eqs: ['b'],
-                ops: ['d'],
+                env: {
+                  'b': false,
+                  'd': true,
+                },
               },
               'd': {
-                ops: ['c'],
+                env: {
+                  'c': true,
+                },
               },
             },
         ),
@@ -88,22 +108,34 @@ describe('#evaluate', () => {
         evaluate(
             {
               'a': {
-                eqs: ['b'],
+                env: {
+                  'b': false,
+                },
               },
               'b': {
-                eqs: ['a'],
-                ops: ['c'],
+                env: {
+                  'a': false,
+                  'c': true,
+                },
               },
               'c': {
-                eqs: ['b', 'd'],
-                ops: ['e'],
+                env: {
+                  'b': false,
+                  'd': false,
+                  'e': true,
+                },
               },
               'd': {
-                eqs: ['c'],
-                ops: ['e'],
+                env: {
+                  'c': false,
+                  'e': true,
+                },
               },
-              'e': {
-                ops: ['d', 'e'],
+              'd': {
+                env: {
+                  'c': true,
+                  'd': true,
+                },
               },
             },
         ),
