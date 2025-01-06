@@ -1,4 +1,4 @@
-import {prettyNumber, valueVisitF, equationVisitF, z} from '../evaluate.js';
+import {prettyNumber, envValueVisitF, z} from '../evaluate.js';
 
 import assert from 'assert';
 
@@ -8,12 +8,8 @@ describe('#evaluate', () => {
     assert.deepEqual(
         evaluate(
             {
-              'a': {
-                env: {}
-              },
-              'b': {
-                env: {}
-              },
+              'a': {},
+              'b': {},
             },
         ),
         {
@@ -28,14 +24,10 @@ describe('#evaluate', () => {
         evaluate(
             {
               'a': {
-                env: {
-                  'b': false,
-                },
+                'b': false,
               },
               'b': {
-                env: {
-                  'a': false,
-                },
+                'a': false,
               },
             },
         ),
@@ -51,14 +43,10 @@ describe('#evaluate', () => {
         evaluate(
             {
               'a': {
-                env: {
-                  'b': true,
-                },
+                'b': true,
               },
               'b': {
-                env: {
-                  'a': true,
-                },
+                'a': true,
               },
             },
         ),
@@ -71,26 +59,18 @@ describe('#evaluate', () => {
         evaluate(
             {
               'a': {
-                env: {
-                  'b': false,
-                },
+                'b': false,
               },
               'b': {
-                env: {
-                  'a': false,
-                  'c': true,
-                },
+                'a': false,
+                'c': true,
               },
               'c': {
-                env: {
-                  'b': false,
-                  'd': true,
-                },
+                'b': false,
+                'd': true,
               },
               'd': {
-                env: {
-                  'c': true,
-                },
+                'c': true,
               },
             },
         ),
@@ -108,34 +88,24 @@ describe('#evaluate', () => {
         evaluate(
             {
               'a': {
-                env: {
-                  'b': false,
-                },
+                'b': false,
               },
               'b': {
-                env: {
-                  'a': false,
-                  'c': true,
-                },
+                'a': false,
+                'c': true,
               },
               'c': {
-                env: {
-                  'b': false,
-                  'd': false,
-                  'e': true,
-                },
+                'b': false,
+                'd': false,
+                'e': true,
               },
               'd': {
-                env: {
-                  'c': false,
-                  'e': true,
-                },
+                'c': false,
+                'e': true,
               },
               'd': {
-                env: {
-                  'c': true,
-                  'd': true,
-                },
+                'c': true,
+                'd': true,
               },
             },
         ),
