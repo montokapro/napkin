@@ -1,4 +1,4 @@
-import {evaluateF, z} from '../evaluate.js';
+import {evaluateF, withStackTraceF, z} from '../evaluate.js';
 
 import assert from 'assert';
 
@@ -11,9 +11,8 @@ const assertValues = function(graph) {
   const envVisit = (nodeId) => Object.entries(nodeVisit(nodeId).env);
   const valueVisit = (nodeId) => nodeVisit(nodeId).value;
 
-  const evalF = evaluateF(envVisit);
-  const evalOne = evalF(valueVisit)([]);
-  const evalAll = z(evalF)([]);
+  const evalOne = evaluateF(envVisit)(valueVisit);
+  const evalAll = z(evaluateF(withStackTraceF(envVisit)));
 
   for (const [nodeId, node] of Object.entries(graph)) {
     // Only check nodes with a value
@@ -31,13 +30,13 @@ const assertValues = function(graph) {
       assert.equal(
           expected,
           actualAll,
-          `One: ${nodeId}: ${expected} == ${actualAll}`,
+          `All: ${nodeId}: ${expected} == ${actualAll}`,
       );
     }
   }
 };
 
-describe('#envValueVisit', () => {
+describe('#evaluateF', () => {
   it('no edge', () => {
     assertValues(
         {
@@ -53,22 +52,24 @@ describe('#envValueVisit', () => {
     );
   });
 
-  // it('eq edge', () => {
-  //   assertValueEqual(
-  //       {
-  //         'a': {
-  //           'b': false,
-  //         },
-  //         'b': {
-  //           'a': false,
-  //         },
-  //       },
-  //       {
-  //         'a': 0,
-  //         'b': 0,
-  //       },
-  //   );
-  // });
+  it('eq edge', () => {
+    assertValues(
+        {
+          'a': {
+            'env': {
+              'b': false,
+            },
+            'value': 0,
+          },
+          'b': {
+            'env': {
+              'a': false,
+            },
+            'value': 0,
+          },
+        },
+    );
+  });
 
   // it('op edge', () => {
   //   assertValueEqual(

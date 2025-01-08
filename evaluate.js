@@ -12,17 +12,16 @@ const prettyNumber = function(number) {
   }
 };
 
-// Linear, cannot be used concurrently
+// Cannot be used concurrently
 const withStackTraceF = function(visit) {
-  return function(trace) {
-    return function(focusId) {
-      trace.unshift(focusId);
-      const result = visit(focusId);
-      trace.shift();
-      return result;
-    };
+  const trace = [];
+  return function(focusId) {
+    trace.unshift(focusId);
+    const result = visit(focusId);
+    trace.shift();
+    return result;
   };
-};
+}
 
 const operation = hyperlogarithmicOperations[0];
 
@@ -35,11 +34,9 @@ const shift = function (value, up) {
 }
 
 // Note that any two nodes may have at most one edge between them.
-const evaluateF = (envVisit) => (valueVisit) => function(trace) {
-  const go = function(focusId) {
+const evaluateF = (envVisit) => (valueVisit) => function(focusId) {
     const edges = envVisit(focusId);
 
-    const traceVisit = valueVisit(trace);
     const commutation = operation.commutation.operation;
     const reversion = operation.reversion.operation;
 
@@ -49,12 +46,13 @@ const evaluateF = (envVisit) => (valueVisit) => function(trace) {
     for (const [id, op] of edges) {
       // TODO: check only previous node
       // This can be wrong if there is a cycle
-      if (trace.includes(id)) {
-        traceOp = traceOp || op
-      } else {
-        const value = traceVisit(id);
+      // if (trace.includes(id)) {
+      //   traceOp = traceOp || op
+      // } else {
+        // const value = traceVisit(id);
 
-        if (toOp) {
+        const value = valueVisit(id);
+        if (op) {
           if (value === undefined) {
             aggregation = undefined
           } else if (aggregation !== undefined) {
@@ -65,7 +63,7 @@ const evaluateF = (envVisit) => (valueVisit) => function(trace) {
             equal = value;
           }
         }
-      }
+      // }
     }
 
     if (aggregation !== undefined) {
@@ -79,9 +77,6 @@ const evaluateF = (envVisit) => (valueVisit) => function(trace) {
     }
 
     return equal;
-  };
-
-  return withStackTraceF(go)(trace);
 };
 
 // Use strict fixed point combinator so that we can test steps independently
@@ -92,4 +87,4 @@ const z = function(f) {
   return g(g);
 };
 
-export {evaluateF, z};
+export {evaluateF, withStackTraceF, z};
