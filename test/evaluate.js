@@ -79,13 +79,13 @@ describe('#evaluateF', () => {
             'env': {
               'b': true,
             },
-            'value': NaN, // TODO
+            'value': undefined,
           },
           'b': {
             'env': {
               'a': true,
             },
-            'value': NaN, // TODO
+            'value': undefined,
           },
         },
     );
@@ -110,7 +110,10 @@ describe('#evaluateF', () => {
     );
   });
 
-  it('one', () => {
+  // a == b
+  // b -= c
+  // c -- d
+  it('negative infinity', () => {
     assertValues(
         {
           'a': {
@@ -131,13 +134,13 @@ describe('#evaluateF', () => {
               'b': false,
               'd': true,
             },
-            'value': 1,
+            'value': -Infinity,
           },
           'd': {
             'env': {
               'c': true,
             },
-            'value': 1,
+            'value': -Infinity,
           },
         },
     );

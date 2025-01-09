@@ -31,17 +31,17 @@ const evaluateF = (envVisit) => (valueVisit) => function(edge) {
   const commutation = operation.commutation.operation;
   const reversion = operation.reversion.operation;
 
-  let traceOp = false;
+  let fromOp = false;
   let equal = undefined;
   let aggregation = operation.identity;
-  for (const [toId, op] of edges) {
+  for (const [toId, toOp] of edges) {
     // TODO: check only previous node
     // This can be wrong if there is a cycle
     if (fromId == toId) {
-      traceOp = traceOp || op;
+      fromOp = toOp;
     } else {
       const value = valueVisit([focusId, toId]);
-      if (op) {
+      if (toOp) {
         if (value === undefined) {
           aggregation = undefined;
         } else if (aggregation !== undefined) {
@@ -55,17 +55,24 @@ const evaluateF = (envVisit) => (valueVisit) => function(edge) {
     }
   }
 
-  if (aggregation !== undefined) {
-    aggregation = shift(aggregation, false);
-
-    if (traceOp) {
-      equal = reversion(equal, aggregation);
+  if (aggregation === undefined) {
+    if (fromOp) {
+      return undefined;
     } else {
-      equal = aggregation;
+      return equal;
+    }
+  } else {
+    aggregation = shift(aggregation, false);
+    if (fromOp) {
+      if (equal === undefined) {
+        return undefined;
+      } else {
+        return shift(reversion(equal, aggregation), true);
+      }
+    } else {
+      return aggregation;
     }
   }
-
-  return equal;
 };
 
 // Use strict fixed point combinator so that we can test steps independently
