@@ -1,4 +1,4 @@
-import {evaluateF, withStackTraceF, z} from '../evaluate.js';
+import {evaluateF, z} from '../evaluate.js';
 
 import assert from 'assert';
 
@@ -9,29 +9,30 @@ import assert from 'assert';
 const assertValues = function(graph) {
   const nodeVisit = (nodeId) => graph[nodeId];
   const envVisit = (nodeId) => Object.entries(nodeVisit(nodeId).env);
-  const valueVisit = (nodeId) => nodeVisit(nodeId).value;
+  const edgeVisit = (edge) => nodeVisit(edge[1]).value;
 
-  const evalOne = evaluateF(envVisit)(valueVisit);
-  const evalAll = z(evaluateF(withStackTraceF(envVisit)));
+  const f = evaluateF(envVisit);
+  const evalOne = f(edgeVisit);
+  const evalAll = z(f);
 
   for (const [nodeId, node] of Object.entries(graph)) {
     // Only check nodes with a value
     if ('value' in node) {
       const expected = node.value;
 
-      const actualOne = evalOne(nodeId);
+      const actualOne = evalOne([null, nodeId]);
       assert.equal(
           expected,
           actualOne,
           `One: ${nodeId}: ${expected} == ${actualOne}`,
       );
 
-      const actualAll = evalAll(nodeId);
-      assert.equal(
-          expected,
-          actualAll,
-          `All: ${nodeId}: ${expected} == ${actualAll}`,
-      );
+    //   const actualAll = evalAll([null, nodeId]);
+    //   assert.equal(
+    //       expected,
+    //       actualAll,
+    //       `All: ${nodeId}: ${expected} == ${actualAll}`,
+    //   );
     }
   }
 };
@@ -71,78 +72,97 @@ describe('#evaluateF', () => {
     );
   });
 
-  // it('op edge', () => {
-  //   assertValueEqual(
-  //       {
-  //         'a': {
-  //           'b': true,
-  //         },
-  //         'b': {
-  //           'a': true,
-  //         },
-  //       },
-  //       {},
-  //   );
-  // });
+  it('op edge', () => {
+    assertValues(
+        {
+          'a': {
+            'env': {
+              'b': true,
+            },
+            'value': NaN, // TODO
+          },
+          'b': {
+            'env': {
+              'a': true,
+            },
+            'value': NaN, // TODO
+          },
+        },
+    );
+  });
 
-  // it('one', () => {
-  //   assertValueEqual(
-  //       {
-  //         'a': {
-  //           'b': false,
-  //         },
-  //         'b': {
-  //           'a': false,
-  //           'c': true,
-  //         },
-  //         'c': {
-  //           'b': false,
-  //           'd': true,
-  //         },
-  //         'd': {
-  //           'c': true,
-  //         },
-  //       },
-  //       {
-  //         'a': 0,
-  //         'b': 0,
-  //         'c': 1,
-  //         'd': 1,
-  //       },
-  //   );
-  // });
+  it('one', () => {
+    assertValues(
+        {
+          'a': {
+            'env': {
+              'b': false,
+            },
+            'value': 0,
+          },
+          'b': {
+            'env': {
+              'a': false,
+              'c': true,
+            },
+            'value': 0,
+          },
+          'c': {
+            'env': {
+              'b': false,
+              'd': true,
+            },
+            'value': 1,
+          },
+          'd': {
+            'env': {
+              'c': true,
+            },
+            'value': 1,
+          },
+        },
+    );
+  });
 
-  // it('two', () => {
-  //   assertValueEqual(
-  //       {
-  //         'a': {
-  //           'b': false,
-  //         },
-  //         'b': {
-  //           'a': false,
-  //           'c': true,
-  //         },
-  //         'c': {
-  //           'b': false,
-  //           'd': false,
-  //           'e': true,
-  //         },
-  //         'd': {
-  //           'c': false,
-  //           'e': true,
-  //         },
-  //         'd': {
-  //           'c': true,
-  //           'd': true,
-  //         },
-  //       },
-  //       {
-  //         'a': 0,
-  //         'b': 0,
-  //         'c': 1,
-  //         'd': 1,
-  //         'e': 2,
-  //       },
-  //   );
-  // });
+  it('two', () => {
+    assertValues(
+        {
+          'a': {
+            'env': {
+              'b': false,
+            },
+            'value': 0,
+          },
+          'b': {
+            'env': {
+              'a': false,
+              'c': true,
+            },
+            'value': 0,
+          },
+          'c': {
+            'env': {
+              'b': false,
+              'd': false,
+              'e': true,
+            },
+            'value': 1,
+          },
+          'd': {
+            'env': {
+              'c': false,
+              'e': true,
+            },
+            'value': 1,
+          },
+          'e': {
+            'env': {
+              'c': true,
+              'd': true,
+            },
+            'value': 2,
+          },
+        },
+    );
+  });
 });

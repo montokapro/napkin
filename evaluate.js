@@ -12,17 +12,6 @@ const prettyNumber = function(number) {
   }
 };
 
-// Cannot be used concurrently
-const withStackTraceF = function(visit) {
-  const trace = [];
-  return function(focusId) {
-    trace.unshift(focusId);
-    const result = visit(focusId);
-    trace.shift();
-    return result;
-  };
-}
-
 const operation = hyperlogarithmicOperations[0];
 
 const shift = function (value, up) {
@@ -34,8 +23,10 @@ const shift = function (value, up) {
 }
 
 // Note that any two nodes may have at most one edge between them.
-const evaluateF = (envVisit) => (valueVisit) => function(focusId) {
-    const edges = envVisit(focusId);
+const evaluateF = (envVisit) => (valueVisit) => function(edge) {
+  const [fromId, focusId] = edge;
+
+  const edges = envVisit(focusId);
 
     const commutation = operation.commutation.operation;
     const reversion = operation.reversion.operation;
@@ -43,15 +34,13 @@ const evaluateF = (envVisit) => (valueVisit) => function(focusId) {
     let traceOp = false;
     var equal = undefined;
     var aggregation = operation.identity;
-    for (const [id, op] of edges) {
+    for (const [toId, op] of edges) {
       // TODO: check only previous node
       // This can be wrong if there is a cycle
-      // if (trace.includes(id)) {
-      //   traceOp = traceOp || op
-      // } else {
-        // const value = traceVisit(id);
-
-        const value = valueVisit(id);
+      if (fromId == toId) {
+        traceOp = traceOp || op
+      } else {
+        const value = valueVisit([focusId, toId]);
         if (op) {
           if (value === undefined) {
             aggregation = undefined
@@ -63,7 +52,7 @@ const evaluateF = (envVisit) => (valueVisit) => function(focusId) {
             equal = value;
           }
         }
-      // }
+      }
     }
 
     if (aggregation !== undefined) {
@@ -87,4 +76,4 @@ const z = function(f) {
   return g(g);
 };
 
-export {evaluateF, withStackTraceF, z};
+export {evaluateF, z};
