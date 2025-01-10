@@ -1,4 +1,4 @@
-import {evaluateF, z} from '../evaluate.js';
+import {evaluateF, shift, z} from '../evaluate.js';
 
 import assert from 'assert';
 
@@ -8,8 +8,24 @@ import assert from 'assert';
 
 const assertValues = function(graph) {
   const nodeVisit = (nodeId) => graph[nodeId];
-  const envVisit = (nodeId) => Object.entries(nodeVisit(nodeId).env);
-  const edgeVisit = (edge) => nodeVisit(edge[1]).value;
+  const envVisit = (nodeId) => nodeVisit(nodeId).env;
+
+  const edgeVisit = function(edge) {
+    const [fromId, toId] = edge;
+
+    const value = nodeVisit(edge[1]).value;
+
+    if (edge[0] != null) {
+      const env = envVisit(toId);
+      if (env[fromId]) {
+        return shift(value, true);
+      } else {
+        return value;
+      }
+    } else {
+      return value;
+    }
+  };
 
   const f = evaluateF(envVisit);
   const evalOne = f(edgeVisit);
@@ -53,6 +69,7 @@ describe('#evaluateF', () => {
     );
   });
 
+  // a == b
   it('eq edge', () => {
     assertValues(
         {
@@ -72,6 +89,7 @@ describe('#evaluateF', () => {
     );
   });
 
+  // a -- b
   it('op edge', () => {
     assertValues(
         {
@@ -91,6 +109,7 @@ describe('#evaluateF', () => {
     );
   });
 
+  // a =- b
   it('directed edge', () => {
     assertValues(
         {
@@ -113,7 +132,7 @@ describe('#evaluateF', () => {
   // a == b
   // b -= c
   // c -- d
-  it('negative infinity', () => {
+  it('one', () => {
     assertValues(
         {
           'a': {
@@ -134,13 +153,13 @@ describe('#evaluateF', () => {
               'b': false,
               'd': true,
             },
-            'value': -Infinity,
+            'value': 1,
           },
           'd': {
             'env': {
               'c': true,
             },
-            'value': -Infinity,
+            'value': 1,
           },
         },
     );

@@ -12,9 +12,13 @@ const prettyNumber = function(number) {
   }
 };
 
-const operation = hyperlogarithmicOperations[2];
+const operation = hyperlogarithmicOperations[1];
 
 const shift = function(value, up) {
+  if (value === undefined) {
+    return undefined;
+  }
+
   if (up) {
     return Math.exp(value);
   } else {
@@ -26,7 +30,7 @@ const shift = function(value, up) {
 const evaluateF = (envVisit) => (valueVisit) => function(edge) {
   const [fromId, focusId] = edge;
 
-  const edges = envVisit(focusId);
+  const edges = Object.entries(envVisit(focusId));
 
   const commutation = operation.commutation.operation;
   const reversion = operation.reversion.operation;
@@ -45,7 +49,7 @@ const evaluateF = (envVisit) => (valueVisit) => function(edge) {
         if (value === undefined) {
           aggregation = undefined;
         } else if (aggregation !== undefined) {
-          aggregation = commutation(aggregation, value);
+          aggregation = commutation(aggregation, shift(value, false));
         }
       } else {
         if (value !== undefined) {
@@ -55,20 +59,15 @@ const evaluateF = (envVisit) => (valueVisit) => function(edge) {
     }
   }
 
-  if (aggregation === undefined) {
-    if (fromOp) {
+  if (fromOp) {
+    if (aggregation === undefined || equal === undefined) {
       return undefined;
     } else {
-      return equal;
+      return shift(reversion(equal, aggregation), true);
     }
   } else {
-    aggregation = shift(aggregation, false);
-    if (fromOp) {
-      if (equal === undefined) {
-        return undefined;
-      } else {
-        return shift(reversion(equal, aggregation), true);
-      }
+    if (aggregation === undefined) {
+      return equal;
     } else {
       return aggregation;
     }
@@ -83,4 +82,4 @@ const z = function(f) {
   return g(g);
 };
 
-export {evaluateF, z};
+export {evaluateF, shift, z};
