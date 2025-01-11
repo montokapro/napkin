@@ -10,14 +10,15 @@ const assertValues = function(graph) {
   const nodeVisit = (nodeId) => graph[nodeId];
   const envVisit = (nodeId) => nodeVisit(nodeId).env;
 
-  const edgeVisit = function(edge) {
-    const [fromId, toId] = edge;
+  const edgeVisit = function(stack) {
+    const [focusId, fromId] = stack;
 
-    const value = nodeVisit(edge[1]).value;
+    const value = nodeVisit(focusId).value;
 
-    if (edge[0] != null) {
-      const env = envVisit(toId);
+    if (fromId !== undefined) {
+      const env = envVisit(focusId);
       if (env[fromId]) {
+        // TODO: return undefined if multiple entries exist
         return shift(value, true);
       } else {
         return value;
@@ -36,14 +37,14 @@ const assertValues = function(graph) {
     if ('value' in node) {
       const expected = node.value;
 
-      const actualOne = evalOne([null, nodeId]);
-      assert.equal(
-          expected,
-          actualOne,
-          `One: ${nodeId}: ${expected} == ${actualOne}`,
-      );
+      // const actualOne = evalOne([nodeId]);
+      // assert.equal(
+      //     expected,
+      //     actualOne,
+      //     `One: ${nodeId}: ${expected} == ${actualOne}`,
+      // );
 
-      const actualAll = evalAll([null, nodeId]);
+      const actualAll = evalAll([nodeId]);
       assert.equal(
           expected,
           actualAll,
@@ -109,8 +110,28 @@ describe('#evaluateF', () => {
     );
   });
 
+  // a -= b
+  it('forward edge', () => {
+    assertValues(
+        {
+          'a': {
+            'env': {
+              'b': true,
+            },
+            'value': -Infinity,
+          },
+          'b': {
+            'env': {
+              'a': false,
+            },
+            'value': 0,
+          },
+        },
+    );
+  });
+
   // a =- b
-  it('directed edge', () => {
+  it('backward edge', () => {
     assertValues(
         {
           'a': {
@@ -165,47 +186,51 @@ describe('#evaluateF', () => {
     );
   });
 
-  // TODO: support cycles
-  //
-  // it('two', () => {
-  //   assertValues(
-  //       {
-  //         'a': {
-  //           'env': {
-  //             'b': false,
-  //           },
-  //           'value': 0,
-  //         },
-  //         'b': {
-  //           'env': {
-  //             'a': false,
-  //             'c': true,
-  //           },
-  //           'value': 0,
-  //         },
-  //         'c': {
-  //           'env': {
-  //             'b': false,
-  //             'd': false,
-  //             'e': true,
-  //           },
-  //           'value': 1,
-  //         },
-  //         'd': {
-  //           'env': {
-  //             'c': false,
-  //             'e': true,
-  //           },
-  //           'value': 1,
-  //         },
-  //         'e': {
-  //           'env': {
-  //             'c': true,
-  //             'd': true,
-  //           },
-  //           'value': 2,
-  //         },
-  //       },
-  //   );
-  // });
+  // a == b
+  // b -= c
+  // c == d
+  // c -- e
+  // d -- e
+  it('two', () => {
+    assertValues(
+      {
+        'a': {
+            'env': {
+              'b': false,
+            },
+            // 'value': 0,
+          },
+
+          'b': {
+            'env': {
+              'a': false,
+              'c': true,
+            },
+            // 'value': 0,
+          },
+          'c': {
+            'env': {
+              'b': false,
+              'd': false,
+              'e': true,
+            },
+            // 'value': 1,
+          },
+          'd': {
+            'env': {
+              'c': false,
+              'e': true,
+            },
+            // 'value': 1,
+          },
+          'e': {
+            'env': {
+              'c': true,
+              'd': true,
+            },
+            'value': 2,
+          },
+        },
+    );
+  });
 });

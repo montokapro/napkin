@@ -27,24 +27,39 @@ const shift = function(value, up) {
 };
 
 // Note that any two nodes may have at most one edge between them.
-const evaluateF = (envVisit) => (valueVisit) => function(edge) {
-  const [fromId, focusId] = edge;
-
-  const edges = Object.entries(envVisit(focusId));
-
+//
+// Stack must not be empty.
+const evaluateF = (envVisit) => (valueVisit) => function(stack) {
   const commutation = operation.commutation.operation;
   const reversion = operation.reversion.operation;
+
+  const edges = Object.entries(envVisit(stack[0]));
+
+  const stackVisit = function(id) {
+    stack.unshift(id);
+    const result = valueVisit(stack);
+    stack.shift();
+    return result;
+  };
 
   let fromOp = false;
   let equal = undefined;
   let aggregation = operation.identity;
   for (const [toId, toOp] of edges) {
-    // TODO: check only previous node
-    // This can be wrong if there is a cycle
-    if (fromId == toId) {
-      fromOp = toOp;
+    const toIndex = stack.indexOf(toId);
+
+    if (toIndex >= 0) {
+      // TODO: consider supporting self references
+      if (toOp) {
+        if (toIndex != 1) {
+          // Optimization: return undefined;
+          aggregation = undefined;
+        } else {
+          fromOp = toOp;
+        }
+      }
     } else {
-      const value = valueVisit([focusId, toId]);
+      const value = stackVisit(toId);
       if (toOp) {
         if (value === undefined) {
           aggregation = undefined;
@@ -59,19 +74,29 @@ const evaluateF = (envVisit) => (valueVisit) => function(edge) {
     }
   }
 
+  let result;
   if (fromOp) {
     if (aggregation === undefined || equal === undefined) {
-      return undefined;
+      result = undefined;
     } else {
-      return shift(reversion(equal, aggregation), true);
+      result = shift(reversion(equal, aggregation), true);
     }
   } else {
     if (aggregation === undefined) {
-      return equal;
+      result = equal;
     } else {
-      return aggregation;
+      result = aggregation;
     }
   }
+
+  // console.log(stack)
+  // console.log(fromOp)
+  // console.log(equal)
+  // console.log(aggregation)
+  // console.log(result)
+  // console.log("")
+
+  return result;
 };
 
 // Use strict fixed point combinator so that we can test steps independently
