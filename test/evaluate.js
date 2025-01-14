@@ -193,12 +193,12 @@ describe('#evaluateF', () => {
   // d -- e
   it('two', () => {
     assertValues(
-      {
-        'a': {
+        {
+          'a': {
             'env': {
               'b': false,
             },
-            // 'value': 0,
+            'value': 0,
           },
 
           'b': {
@@ -206,7 +206,7 @@ describe('#evaluateF', () => {
               'a': false,
               'c': true,
             },
-            // 'value': 0,
+            'value': 0,
           },
           'c': {
             'env': {
@@ -214,14 +214,14 @@ describe('#evaluateF', () => {
               'd': false,
               'e': true,
             },
-            // 'value': 1,
+            'value': 1,
           },
           'd': {
             'env': {
               'c': false,
               'e': true,
             },
-            // 'value': 1,
+            'value': 1,
           },
           'e': {
             'env': {
@@ -229,6 +229,116 @@ describe('#evaluateF', () => {
               'd': true,
             },
             'value': 2,
+          },
+        },
+    );
+  });
+
+  // 0a == 0b
+  // 0b -= 1a
+  // 1a == 1b
+  // 1a -- 2a
+  // 1b -- 2a
+  // 1b == 1c
+  // 1c == 1d
+  // 1d == 1e
+  // 1c -- 3a
+  // 1d -- 3a
+  // 1e -- 3a
+  // 2a -- 5a
+  // 3a -- 5a
+  it('add', () => {
+    assertValues(
+        {
+          '0a': {
+            'env': {
+              '0b': false,
+            },
+            'value': 0,
+          },
+          '0b': {
+            'env': {
+              '0a': false,
+              '1a': true,
+            },
+            'value': 0,
+          },
+          '1a': {
+            'env': {
+              '0b': false,
+              '1b': false,
+              '2a': true,
+            },
+            'value': 1,
+          },
+          '1b': {
+            'env': {
+              '1a': false,
+              '1c': false,
+              '2a': true,
+            },
+            'value': 1,
+          },
+          '2a': {
+            'env': {
+              '1a': true,
+              '1b': true,
+              '2b': false,
+            },
+            'value': 2,
+          },
+          '1c': {
+            'env': {
+              '1b': false,
+              '1d': false,
+              '3a': true,
+            },
+            'value': 1,
+          },
+          '1d': {
+            'env': {
+              '1c': false,
+              '1e': false,
+              '3a': true,
+            },
+            'value': 1,
+          },
+          '1e': {
+            'env': {
+              '1d': false,
+              '3a': true,
+            },
+            'value': 1,
+          },
+          '3a': {
+            'env': {
+              '1c': true,
+              '1d': true,
+              '1e': true,
+              '3b': false,
+            },
+            'value': 3,
+          },
+          '2b': {
+            'env': {
+              '2a': false,
+              '5a': true,
+            },
+            'value': 2,
+          },
+          '3b': {
+            'env': {
+              '3a': false,
+              '5a': true,
+            },
+            'value': 3,
+          },
+          '5a': {
+            'env': {
+              '2b': true,
+              '3b': true,
+            },
+            'value': 5,
           },
         },
     );
