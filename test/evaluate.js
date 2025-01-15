@@ -2,9 +2,13 @@ import {evaluateF, z} from '../evaluate.js';
 
 import assert from 'assert';
 
-// const isClose = function(a, b, tolerance = 1e-10) {
-//   return Math.abs(a - b) <= tolerance;
-// };
+const isClose = function(a, b, tolerance = 1e-10) {
+  if (a === b) {
+    return true;
+  } else {
+    return Math.abs(a - b) <= tolerance;
+  }
+};
 
 const assertValues = function(graph) {
   const envVisit = (nodeId) => graph[nodeId].env;
@@ -36,16 +40,14 @@ const assertValues = function(graph) {
       const expected = node.value;
 
       const actualOne = evalOne([nodeId]);
-      assert.equal(
-          expected,
-          actualOne,
+      assert(
+          isClose(expected, actualOne),
           `One: ${nodeId}: ${expected} == ${actualOne}`,
       );
 
       const actualAll = evalAll([nodeId]);
-      assert.equal(
-          expected,
-          actualAll,
+      assert(
+          isClose(expected, actualAll),
           `All: ${nodeId}: ${expected} == ${actualAll}`,
       );
     }
@@ -232,19 +234,6 @@ describe('#evaluateF', () => {
     );
   });
 
-  // 0a == 0b
-  // 0b -= 1a
-  // 1a == 1b
-  // 1a -- 2a
-  // 1b -- 2a
-  // 1b == 1c
-  // 1c == 1d
-  // 1d == 1e
-  // 1c -- 3a
-  // 1d -- 3a
-  // 1e -- 3a
-  // 2a -- 5a
-  // 3a -- 5a
   it('add', () => {
     assertValues(
         {
@@ -282,6 +271,8 @@ describe('#evaluateF', () => {
               '1a': true,
               '1b': true,
               '2b': false,
+              'v6a': false,
+              'v9a': false,
             },
             'value': 2,
           },
@@ -314,6 +305,8 @@ describe('#evaluateF', () => {
               '1d': true,
               '1e': true,
               '3b': false,
+              'v6a': false,
+              'v3a': false,
             },
             'value': 3,
           },
@@ -337,6 +330,76 @@ describe('#evaluateF', () => {
               '3b': true,
             },
             'value': 5,
+          },
+          'v6a': {
+            'env': {
+              '2a': true,
+              '3a': true,
+              'v6b': false,
+            },
+            'value': Math.log(6),
+          },
+          'v6b': {
+            'env': {
+              'v6a': false,
+              '6a': true,
+            },
+            'value': Math.log(6),
+          },
+          '6a': {
+            'env': {
+              'v6b': false,
+              '6b': true,
+            },
+            'value': 6,
+          },
+          '6b': {
+            'env': {
+              '6a': true,
+            },
+            'value': 6,
+          },
+          'v3a': {
+            'env': {
+              '3a': true,
+              'vv9a': false,
+            },
+            'value': Math.log(3),
+          },
+          'vv9a': {
+            'env': {
+              '2a': true,
+              'v3a': true,
+              'vv9b': false,
+            },
+            'value': Math.log(Math.log(9)),
+          },
+          'vv9b': {
+            'env': {
+              'vv9a': false,
+              'v9a': true,
+            },
+            'value': Math.log(Math.log(9)),
+          },
+          'v9a': {
+            'env': {
+              'vv9b': false,
+              '9a': true,
+            },
+            'value': Math.log(9),
+          },
+          '9a': {
+            'env': {
+              'v9a': false,
+              '9b': true,
+            },
+            'value': 9,
+          },
+          '9b': {
+            'env': {
+              '9a': true,
+            },
+            'value': 9,
           },
         },
     );
