@@ -1,24 +1,28 @@
 import {hyperlogarithmicOperations} from './operations.js';
 import {objectIterable} from './struct.js';
 
-const prettyNumber = function(number) {
-  switch (number) {
-    case -Infinity:
-      return '-∞';
-    case Infinity:
-      return '∞';
-    default:
-      return number;
+// const prettyNumber = function(number) {
+//   switch (number) {
+//     case -Infinity:
+//       return '-∞';
+//     case Infinity:
+//       return '∞';
+//     default:
+//       return number;
+//   }
+// };
+
+// const operation = hyperlogarithmicOperations[1];
+
+const undefinedF = (f) => function(...args) {
+  if (args.some((arg) => arg === undefined)) {
+    return undefined;
+  } else {
+    return f(...args);
   }
 };
 
-const operation = hyperlogarithmicOperations[1];
-
 const shift = function(value, up) {
-  if (value === undefined) {
-    return undefined;
-  }
-
   if (up) {
     return Math.exp(value);
   } else {
@@ -26,25 +30,30 @@ const shift = function(value, up) {
   }
 };
 
+const ctx = {
+  'identity': 0,
+  'commutation': undefinedF((a, b) => a + b),
+  'reversion': undefinedF((a, b) => a - b),
+  'shift': undefinedF(shift),
+};
+
+
 // Note that any two nodes may have at most one edge between them.
 //
 // Stack must not be empty.
-const evaluateF = (envVisit) => (valueVisit) => function(stack) {
-  const commutation = operation.commutation.operation;
-  const reversion = operation.reversion.operation;
+const evaluateF = (env) => (f) => function(stack) {
+  const edges = Object.entries(env(stack[0]));
 
-  const edges = Object.entries(envVisit(stack[0]));
-
-  const stackVisit = function(id) {
+  const visit = function(id) {
     stack.unshift(id);
-    const result = valueVisit(stack);
+    const result = f(stack);
     stack.shift();
     return result;
   };
 
   let fromOp = false;
   let equal = undefined;
-  let aggregation = operation.identity;
+  let aggregation = ctx.identity;
   for (const [toId, toOp] of edges) {
     const toIndex = stack.indexOf(toId);
 
@@ -59,16 +68,14 @@ const evaluateF = (envVisit) => (valueVisit) => function(stack) {
         }
       }
     } else {
-      const value = stackVisit(toId);
       if (toOp) {
-        if (value === undefined) {
-          aggregation = undefined;
-        } else if (aggregation !== undefined) {
-          aggregation = commutation(aggregation, shift(value, false));
-        }
+        aggregation = ctx.commutation(
+            aggregation,
+            ctx.shift(visit(toId), false),
+        );
       } else {
-        if (value !== undefined) {
-          equal = value;
+        if (equal === undefined) {
+          equal = visit(toId);
         }
       }
     }
@@ -76,11 +83,7 @@ const evaluateF = (envVisit) => (valueVisit) => function(stack) {
 
   let result;
   if (fromOp) {
-    if (aggregation === undefined || equal === undefined) {
-      result = undefined;
-    } else {
-      result = shift(reversion(equal, aggregation), true);
-    }
+    result = ctx.shift(ctx.reversion(equal, aggregation), true);
   } else {
     if (aggregation === undefined) {
       result = equal;
@@ -107,4 +110,4 @@ const z = function(f) {
   return g(g);
 };
 
-export {evaluateF, shift, z};
+export {evaluateF, z};

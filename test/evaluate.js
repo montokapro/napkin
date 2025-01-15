@@ -1,4 +1,4 @@
-import {evaluateF, shift, z} from '../evaluate.js';
+import {evaluateF, z} from '../evaluate.js';
 
 import assert from 'assert';
 
@@ -7,29 +7,27 @@ import assert from 'assert';
 // };
 
 const assertValues = function(graph) {
-  const nodeVisit = (nodeId) => graph[nodeId];
-  const envVisit = (nodeId) => nodeVisit(nodeId).env;
+  const envVisit = (nodeId) => graph[nodeId].env;
 
-  const edgeVisit = function(stack) {
-    const [focusId, fromId] = stack;
+  const memoVisitF = (f) => function(stack) {
+    const nodeId = stack[0];
+    const node = graph[nodeId];
 
-    const value = nodeVisit(focusId).value;
+    if ('value' in node) {
+      const fromId = stack[1];
 
-    if (fromId !== undefined) {
-      const env = envVisit(focusId);
-      if (env[fromId]) {
-        // TODO: return undefined if multiple entries exist
-        return shift(value, true);
-      } else {
-        return value;
+      if (node.env[fromId] === false) {
+        return node.value;
       }
-    } else {
-      return value;
     }
+
+    return f(stack);
   };
 
   const f = evaluateF(envVisit);
-  const evalOne = f(edgeVisit);
+  const g = (visit) => f(memoVisitF(visit));
+
+  const evalOne = z(g);
   const evalAll = z(f);
 
   for (const [nodeId, node] of Object.entries(graph)) {
@@ -37,12 +35,12 @@ const assertValues = function(graph) {
     if ('value' in node) {
       const expected = node.value;
 
-      // const actualOne = evalOne([nodeId]);
-      // assert.equal(
-      //     expected,
-      //     actualOne,
-      //     `One: ${nodeId}: ${expected} == ${actualOne}`,
-      // );
+      const actualOne = evalOne([nodeId]);
+      assert.equal(
+          expected,
+          actualOne,
+          `One: ${nodeId}: ${expected} == ${actualOne}`,
+      );
 
       const actualAll = evalAll([nodeId]);
       assert.equal(
