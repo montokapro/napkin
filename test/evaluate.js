@@ -200,7 +200,6 @@ describe('#evaluateF', () => {
             },
             'value': 0,
           },
-
           'b': {
             'env': {
               'a': false,
@@ -240,6 +239,8 @@ describe('#evaluateF', () => {
           '0a': {
             'env': {
               '0b': false,
+              '0c': false,
+              '0d': false,
             },
             'value': 0,
           },
@@ -400,6 +401,34 @@ describe('#evaluateF', () => {
               '9a': true,
             },
             'value': 9,
+          },
+          '0c': {
+            'env': {
+              '0a': false,
+              '1f': true,
+            },
+            'value': 0,
+          },
+          '1f': {
+            'env': {
+              '0c': false,
+              '0d': true,
+            },
+            'value': 1,
+          },
+          '0d': {
+            'env': {
+              '0a': false,
+              '1f': true,
+              '-1a': true,
+            },
+            'value': 0,
+          },
+          '-1a': {
+            'env': {
+              '0d': true,
+            },
+            'value': -1,
           },
         },
     );
