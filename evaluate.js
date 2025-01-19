@@ -39,12 +39,14 @@ const shift = function(n, float) {
   return float;
 };
 
-const ctx = {
+const floatCtx = {
   'identity': 0,
   'commutation': undefinedF((a, b) => a + b),
   'reversion': undefinedF((a, b) => a - b),
   'shift': undefinedF((value, up) => up ? shift(1, value) : shift(-1, value)),
 };
+
+const shiftValueToFloat = (value) => shift(value.shift, value.float);
 
 const shiftCtx = {
   'identity': {
@@ -55,7 +57,7 @@ const shiftCtx = {
       (a, b) => (
         {
           'shift': 0,
-          'float': shift(a.shift, a.float) + shift(b.shift, b.float),
+          'float': shiftValueToFloat(a) + shiftValueToFloat(b),
         }
       ),
   ),
@@ -63,7 +65,7 @@ const shiftCtx = {
       (a, b) => (
         {
           'shift': 0,
-          'float': shift(a.shift, a.float) - shift(b.shift, b.float),
+          'float': shiftValueToFloat(a) - shiftValueToFloat(b),
         }
       ),
   ),
@@ -80,7 +82,7 @@ const shiftCtx = {
 // Note that any two nodes may have at most one edge between them.
 //
 // Stack must not be empty.
-const evaluateF = (env) => (f) => function(stack) {
+const evaluateF = (env) => (ctx) => (f) => function(stack) {
   const edges = Object.entries(env(stack[0]));
 
   const visit = function(id) {
@@ -164,4 +166,8 @@ const graphEdges = function(graph) {
   return edges;
 };
 
-export {evaluateF, z, graphEdges};
+export {
+  evaluateF, z, undefinedF,
+  floatCtx, shiftValueToFloat, shiftCtx,
+  graphEdges,
+};
