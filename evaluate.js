@@ -22,21 +22,60 @@ const undefinedF = (f) => function(...args) {
   }
 };
 
-const shift = function(value, up) {
-  if (up) {
-    return Math.exp(value);
+// Assumes n is a safe integer
+const shift = function(n, float) {
+  let i = 0;
+  if (n >= 0) {
+    while (i < n) {
+      float = Math.exp(float);
+      i++;
+    }
   } else {
-    return Math.log(value);
+    while (i > n) {
+      float = Math.log(float);
+      i--;
+    }
   }
+  return float;
 };
 
 const ctx = {
   'identity': 0,
   'commutation': undefinedF((a, b) => a + b),
   'reversion': undefinedF((a, b) => a - b),
-  'shift': undefinedF(shift),
+  'shift': undefinedF((value, up) => up ? shift(1, value) : shift(-1, value)),
 };
 
+const shiftCtx = {
+  'identity': {
+    'shift': 0,
+    'float': 0,
+  },
+  'commutation': undefinedF(
+      (a, b) => (
+        {
+          'shift': 0,
+          'float': shift(a.shift, a.float) + shift(b.shift, b.float),
+        }
+      ),
+  ),
+  'reversion': undefinedF(
+      (a, b) => (
+        {
+          'shift': 0,
+          'float': shift(a.shift, a.float) - shift(b.shift, b.float),
+        }
+      ),
+  ),
+  'shift': undefinedF(
+      (value, up) => (
+        {
+          'shift': up ? value.shift + 1 : value.shift - 1,
+          'float': value.float,
+        }
+      ),
+  ),
+};
 
 // Note that any two nodes may have at most one edge between them.
 //
@@ -110,4 +149,19 @@ const z = function(f) {
   return g(g);
 };
 
-export {evaluateF, z};
+const graphEdges = function(graph) {
+  const edges = [];
+  for (const [fromId, from] of Object.entries(graph)) {
+    for (const [toId] of Object.keys(from.env)) {
+      if (fromId <= toId) {
+        const edgeId = [fromId, toId].join('-');
+        const to = graph[toId];
+        const edge = [from, to];
+        edges.unshift([edgeId, edge]);
+      }
+    }
+  }
+  return edges;
+};
+
+export {evaluateF, z, graphEdges};

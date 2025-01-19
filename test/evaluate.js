@@ -1,4 +1,4 @@
-import {evaluateF, z} from '../evaluate.js';
+import {evaluateF, z, graphEdges} from '../evaluate.js';
 
 import assert from 'assert';
 
@@ -432,5 +432,72 @@ describe('#evaluateF', () => {
           },
         },
     );
+  });
+});
+
+describe('#graphEdges', () => {
+  it('no edge', () => {
+    const graph = {
+      'a': {
+        env: {},
+        value: 0,
+      },
+      'b': {
+        env: {},
+        value: 0,
+      },
+    };
+
+    const expected = [];
+
+    assert.deepEqual(expected, graphEdges(graph));
+  });
+
+  // a == b
+  it('eq edge', () => {
+    const graph = {
+      'a': {
+        'env': {
+          'b': false,
+        },
+        'value': 0,
+      },
+      'b': {
+        'env': {
+          'a': false,
+        },
+        'value': 0,
+      },
+    };
+
+    const expected = [
+      ['a-b', [graph['a'], graph['b']]],
+    ];
+
+    assert.deepEqual(expected, graphEdges(graph));
+  });
+
+  // a -- b
+  it('op edge', () => {
+    const graph = {
+      'a': {
+        'env': {
+          'b': true,
+        },
+        'value': undefined,
+      },
+      'b': {
+        'env': {
+          'a': true,
+        },
+        'value': undefined,
+      },
+    };
+
+    const expected = [
+      ['a-b', [graph['a'], graph['b']]],
+    ];
+
+    assert.deepEqual(expected, graphEdges(graph));
   });
 });
