@@ -143,6 +143,24 @@ const evaluateF = (env) => (ctx) => (f) => function(stack) {
   return result;
 };
 
+const isEqualF = (env) => (f) => function(aId, bId) {
+  const aEnv = env(aId);
+  const bEnv = env(bId);
+
+  if (aEnv[bId] == false && bEnv[aId] == false) {
+    return true;
+  }
+
+  const aIdentity = Object.values(aEnv).every((value) => value !== false);
+  const bIdentity = Object.values(bEnv).every((value) => value !== false);
+
+  if (aIdentity && bIdentity) {
+    return true;
+  }
+
+  return undefined;
+};
+
 // Use strict fixed point combinator so that we can test steps independently
 // https://en.wikipedia.org/wiki/Fixed-point_combinator#Strict_fixed-point_combinator
 const z = function(f) {
@@ -167,7 +185,7 @@ const graphEdges = function(graph) {
 };
 
 export {
-  evaluateF, z, undefinedF,
   floatCtx, shiftValueToFloat, shiftCtx,
+  evaluateF, isEqualF, z, undefinedF,
   graphEdges,
 };

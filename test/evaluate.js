@@ -1,6 +1,6 @@
 import {
-  evaluateF, z, undefinedF,
   floatCtx, shiftValueToFloat, shiftCtx,
+  evaluateF, isEqualF, z, undefinedF,
   graphEdges,
 } from '../evaluate.js';
 
@@ -448,6 +448,58 @@ describe('#evaluateF', () => {
     );
   });
 });
+
+describe('#isEqualF', () => {
+  let graph;
+  const env = (nodeId) => graph[nodeId].env;
+
+  it('identity', () => {
+    graph = {
+      'a': {
+        'env': {},
+        'float': 0,
+      },
+      'b': {
+        'env': {},
+        'float': 0,
+      },
+    };
+
+    const expected = true;
+    const actual = isEqualF(env)(() => {})('a', 'b');
+
+    assert.equal(expected, actual);
+  });
+
+  it('equal', () => {
+    graph = {
+      'a': {
+        'env': {
+          'b': false,
+          'c': true,
+        },
+      },
+      'b': {
+        'env': {
+          'a': false,
+          'c': true,
+        },
+      },
+      'c': {
+        'env': {
+          'a': true,
+          'b': true,
+        },
+      },
+    };
+
+    const expected = true;
+    const actual = isEqualF(env)(() => {})('a', 'b');
+
+    assert.equal(expected, actual);
+  });
+});
+
 
 describe('#graphEdges', () => {
   it('no edge', () => {
