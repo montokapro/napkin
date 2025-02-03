@@ -1,63 +1,76 @@
 'use strict';
 
-import {graphs} from './graphs.js';
-import {hyperlogarithmicOperations} from './operations.js';
+import {
+  graphs
+} from './graphs.js';
+
+// import {hyperlogarithmicOperations} from './operations.js';
 import {addToArray, objectIterable, objectsByIdsIterable} from './struct.js';
-import {envValueVisitF, envEquationVisitF, z} from './evaluate.js';
+// import {envValueVisitF, envEquationVisitF, z} from './evaluate.js';
+
+import {
+  floatCtx, shiftValueToFloat, shiftCtx,
+  evaluateF, z, undefinedF,
+  graphEdges,
+} from './evaluate.js';
 
 const thickness = 1 / 8;
 const scale = 128;
 
-const env = {};
-const envObjectsByIdsIterable = objectsByIdsIterable(env);
-const valueVisitF = envValueVisitF(env);
-const equationVisitF = envEquationVisitF(env);
+const nodes = {};
+const edges = {};
 
-let draggedNode;
+let draggedNodeEntry;
 
-const equationSelection = d3.select('#equation');
-const calculationSelection = d3.select('#calculation');
+const envEvaluateF = evaluateF((nodeId) => nodes[nodeId].env);
+const floatEvaluateF = envEvaluateF(floatCtx);
+const floatEvaluate = z(floatEvaluateF);
+const floatVisitF = floatEvaluateF(nodes);
+
+// const stringVisitF = stringEvaluateF(graph);
+
+// const envObjectsByIdsIterable = objectsByIdsIterable(graph);
+
+// const equationSelection = d3.select('#equation');
+// const calculationSelection = d3.select('#calculation');
 const displaySelection = d3.select('#display');
 
-equationSelection.on('input', function(d) {
-  const value = this.value;
-  Object.entries(env).forEach(function(entry) {
-    const data = entry[1];
-    if (data.selected) {
-      if (value === '') {
-        delete data.name;
-      } else {
-        data.name = value;
-      }
-      updateName(data);
-    }
-  });
-});
+// equationSelection.on('input', function(d) {
+//   const value = this.value;
+//   Object.entries(env).forEach(function(entry) {
+//     const data = entry[1];
+//     if (data.selected) {
+//       if (value === '') {
+//         delete data.name;
+//       } else {
+//         data.name = value;
+//       }
+//       updateName(data);
+//     }
+//   });
+// });
 
-calculationSelection.on('input', function(d) {
-  const value = this.value;
-  Object.entries(env).forEach(function(entry) {
-    const data = entry[1];
-    if (data.selected) {
-      const float = parseFloat(value);
-      if (isNaN(float)) {
-        delete data.float;
-      } else {
-        data.float = float;
-      }
-    }
-  });
-});
+// calculationSelection.on('input', function(d) {
+//   const value = this.value;
+//   Object.entries(env).forEach(function(entry) {
+//     const data = entry[1];
+//     if (data.selected) {
+//       const float = parseFloat(value);
+//       if (isNaN(float)) {
+//         delete data.float;
+//       } else {
+//         data.float = float;
+//       }
+//     }
+//   });
+// });
 
-const graphClick = function() {
-  Object.entries(env).forEach((e) => delete e[1].selected);
+// const graphClick = function() {
+//   Object.entries(graph).forEach((e) => delete e[1].selected);
 
-  updateNodeFill(nodeSelection.selectAll('.node').select('circle'));
-  updatePortFill(nodeSelection.selectAll('.node').selectAll('.port'));
-  updateEdgeStroke(edgeSelection.selectAll('.edge'));
-
-  updatePortVisible(nodeSelection.selectAll('.node').selectAll('.port'));
-};
+//   updateNodeFill(nodeSelection.selectAll('.node').select('circle'));
+//   updateEdgeStroke(edgeSelection.selectAll('.edge'));
+// };
 
 const handleZoom = function(e) {
   d3.select('#image')
@@ -73,8 +86,7 @@ const svgSelection = displaySelection
     .attr('width', '100vw')
     .attr('height', '100vh')
     .call(zoom)
-    .call(zoom.transform, d3.zoomIdentity.scale(scale))
-    .on('click', graphClick);
+    .call(zoom.transform, d3.zoomIdentity.scale(scale));
 
 const imageSelection = svgSelection
     .append('g')
@@ -90,108 +102,57 @@ const nodeSelection = imageSelection
     .append('g')
     .attr('id', 'nodes');
 
-const valueVisit = z(valueVisitF)([]);
-const equationVisit = z(equationVisitF)([]);
-
-const edgeOver = function(e, d, i) {
-  const equationResult = equationVisit(d.id);
-  if (equationResult === undefined || equationResult.name === undefined) {
-    equationSelection.property('value', '');
-  } else {
-    equationSelection.property('value', equationResult.name);
-  }
-  const valueResult = valueVisit(d.id);
-  if (valueResult === undefined) {
-    calculationSelection.property('value', '');
-  } else {
-    calculationSelection.property('value', valueResult);
-  }
-};
-
-const edgeOut = function(e, d, i) {
-  calculationSelection.property('value', '');
-  equationSelection.property('value', '');
-};
+// const equationVisit = z(equationVisitF)([]);
+// const valueVisit = z(valueVisitF)([]);
 
 const nodeOver = function(e, d, i) {
-  const equationResult = equationVisit(d.id);
-  if (equationResult === undefined || equationResult.name === undefined) {
-    equationSelection.property('value', '');
-  } else {
-    equationSelection.property('value', equationResult.name);
-  }
-  const valueResult = valueVisit(d.id);
-  if (valueResult === undefined) {
-    calculationSelection.property('value', '');
-  } else {
-    calculationSelection.property('value', valueResult);
-  }
+  // const equationResult = equationVisit(d.id);
+  // if (equationResult === undefined || equationResult.name === undefined) {
+  //   equationSelection.property('value', '');
+  // } else {
+  //   equationSelection.property('value', equationResult.name);
+  // }
+  // const valueResult = valueVisit(d.id);
+  // if (valueResult === undefined) {
+  //   calculationSelection.property('value', '');
+  // } else {
+  //   calculationSelection.property('value', valueResult);
+  // }
 };
 
 const nodeOut = function(e, d, i) {
-  calculationSelection.property('value', '');
-  equationSelection.property('value', '');
+  // calculationSelection.property('value', '');
+  // equationSelection.property('value', '');
 };
 
-const updateEdgePath = function(pathSelection) {
-  return pathSelection
-      .attr('d', function(d) {
-        const sourcePort = env[d['portIds'][0]];
-        const targetPort = env[d['portIds'][1]];
-        const sourceNode = env[sourcePort['nodeId']];
-        const targetNode = env[targetPort['nodeId']];
+const entryId = entry => 'UUID-' + entry[0];
+const entryKey = entry => '#UUID-' + entry[0];
 
-        const path = d3.path();
-        path.moveTo(
-            sourceNode.point[0],
-            sourceNode.point[1],
-        );
-        path.bezierCurveTo(
-            sourceNode.point[0] + sourcePort.point[0],
-            sourceNode.point[1] + sourcePort.point[1],
-            targetNode.point[0] + targetPort.point[0],
-            targetNode.point[1] + targetPort.point[1],
-            targetNode.point[0],
-            targetNode.point[1],
-        );
-        return path.toString();
-      });
-};
-
-const updateEdgeStroke = function(pathSelection) {
-  return pathSelection
-      .attr('stroke', function(d) {
-        if (d.selected) {
-          return '#FFC3BF';
-        } else {
-          return '#FF928B';
-        }
-      });
+const updateEdgePoints = function(lineSelection) {
+  return lineSelection
+    .attr("x1", d => d[1][0].point[0])
+    .attr("y1", d => d[1][0].point[1])
+    .attr("x2", d => d[1][1].point[0])
+    .attr("y2", d => d[1][1].point[1]);
 };
 
 const enterEdge = function(selection) {
-  const pathSelection = selection.append('path');
+  const lineSelection = selection.append('line')
 
-  pathSelection
-      .attr('id', (d) => 'UUID-' + d.id)
-      .attr('class', 'edge')
+  lineSelection
+      .attr('id', entryId)
       .attr('fill', 'none')
       .attr('pointer-events', 'stroke')
-      .attr('stroke-width', thickness);
+      .attr('stroke-width', thickness)
+      .style("stroke", "#FF928B");
 
-  updateEdgePath(pathSelection);
-  updateEdgeStroke(pathSelection);
+  updateEdgePoints(lineSelection)
 
-  return pathSelection
-      .on('mouseover', edgeOver)
-      .on('mouseout', edgeOut)
-      .on('click', edgeClick);
+  return lineSelection;
 };
 
-const updateEdge = function(pathSelection) {
-  updateEdgeStroke(pathSelection);
-
-  return pathSelection;
+const updateEdge = function(lineSelection) {
+  return updateEdgePoints(lineSelection);
 };
 
 // Respond to right click
@@ -200,312 +161,97 @@ const dragFilter = function(event) {
   return !event.ctrlKey && (event.button !== 0 || event.button !== 2);
 };
 
-const duplicateNode = function(originalNode, originalPort) {
-  const duplicateNode = Object.assign({}, originalNode);
-  duplicateNode.id = crypto.randomUUID();
-  delete duplicateNode.portIds;
-  env[duplicateNode.id] = duplicateNode;
-
-  for (const port of envObjectsByIdsIterable(originalNode, 'portIds')) {
-    const duplicatePort = Object.assign({}, port);
-    duplicatePort.id = crypto.randomUUID();
-    duplicatePort.nodeId = duplicateNode.id;
-    addToArray('portIds')(duplicateNode, duplicatePort.id);
-
-    delete duplicatePort.edgeIds;
-
-    env[duplicatePort.id] = duplicatePort;
-
-    if (originalPort === undefined || originalPort.id === port.id) {
-      const edge = {};
-      edge.id = crypto.randomUUID();
-      edge.type = 'edge';
-      env[edge.id] = edge;
-
-      edge['portIds'] = [port.id, duplicatePort.id];
-      addToArray('edgeIds')(port, edge.id);
-      addToArray('edgeIds')(duplicatePort, edge.id);
-
-      duplicatePort.edgeIds = [edge.id];
-
-      edgeSelection
-          .selectAll('.edge')
-          .select('#UUID-' + edge.id)
-          .data([edge], (edge) => edge.id)
-          .join(enterEdge, updateEdge);
-    }
-  }
-
-  nodeSelection
-      .selectAll('.node')
-      .select('#UUID-' + duplicateNode.id)
-      .data([duplicateNode], (node) => node.id)
-      .join(enterNode, updateNode);
-
-  return duplicateNode;
+const updateNodePoint = function(groupSelection) {
+  return groupSelection
+    .attr('transform', d => 'translate(' + d[1].point.join(',') + ')');
 };
 
-const updateNodePoint = function(event, d) {
-  d.point = [event.x, event.y];
+const modifyNodePoint = function(event, d) {
+  const [nodeId, node] = d;
 
-  nodeSelection.selectAll('#UUID-' + d.id)
-      .attr('transform', 'translate(' + d.point[0] + ',' + d.point[1] + ')');
+  node.point = [event.x, event.y];
 
-  const nodePortIds = Array.from(objectIterable(d, 'portIds'));
+  updateNodePoint(nodeSelection.selectAll('#UUID-' + nodeId));
 
-  const includePortId = function(edge) {
-    const edgePortIds = Array.from(objectIterable(edge, 'portIds'));
+  const edgeIds = [];
+  for (const [toId] of Object.keys(node.env)) {
+    // TODO: vulnerable to injection
+    const edgeId = "#UUID-" + [nodeId, toId].sort().join('-');
+    edgeIds.unshift(edgeId);
+  }
 
-    for (const edgePortId of edgePortIds) {
-      for (const nodePortId of nodePortIds) {
-        if (edgePortId === nodePortId) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  };
-
-  updateEdgePath(d3.selectAll('.edge').filter(includePortId));
+  if (edgeIds.length > 0) {
+    updateEdgePoints(edgeSelection.selectAll(edgeIds.join(',')));
+  }
 };
 
 // https://stackoverflow.com/questions/28102089/simple-graph-of-nodes-and-links-without-using-force-layout
 const nodeDragStarted = function(event, d) {
-  if (event.sourceEvent.button === 2) {
-    draggedNode = duplicateNode(d, undefined);
-  } else {
-    draggedNode = d;
-  }
+  draggedNodeEntry = d;
 
-  nodeSelection.selectAll('#UUID-' + draggedNode.id).attr('cursor', 'grabbing');
+  nodeSelection
+    .selectAll('#UUID-' + draggedNodeEntry[0])
+    .attr('cursor', 'grabbing');
 };
 
 const nodeDragged = function(event, d) {
-  if (draggedNode === undefined) {
-    updateNodePoint(event, d);
+  if (draggedNodeEntry === undefined) {
+    modifyNodePoint(event, d);
   } else {
-    updateNodePoint(event, draggedNode);
+    modifyNodePoint(event, draggedNodeEntry);
   }
 };
 
 const nodeDragEnded = function(event, d) {
-  nodeSelection.selectAll('#UUID-' + draggedNode.id).attr('cursor', 'grab');
+  nodeSelection
+    .selectAll('#UUID-' + draggedNodeEntry[0])
+    .attr('cursor', 'grab');
 
-  draggedNode = undefined;
+  draggedNodeEntry = undefined;
 };
 
-const updatePortPoint = function(event, d, self) {
-  d.point = [event.x, event.y];
-
-  d3.select(self)
-      .attr('cx', d.point[0])
-      .attr('cy', d.point[1]);
-
-  const includePortId = function(edge) {
-    return Array.from(objectIterable(edge, 'portIds')).includes(d.id);
-  };
-
-  updateEdgePath(d3.selectAll('.edge').filter(includePortId));
-};
-
-const portDragStarted = function(event, d) {
-  if (event.sourceEvent.button === 2) {
-    const node = env[d.nodeId];
-
-    draggedNode = duplicateNode(node, d);
-  }
-};
-
-const portDragged = function(event, d) {
-  if (draggedNode === undefined) {
-    updatePortPoint(event, d, this);
-  } else {
-    const node = env[d.nodeId];
-
-    const point = {
-      x: node.point[0] - d.point[0] + event.x,
-      y: node.point[1] - d.point[1] + event.y,
-    };
-
-    updateNodePoint(point, draggedNode);
-  }
-};
-
-const portDragEnded = function(event, d) {
-  draggedNode = undefined;
-};
-
-const updatePortFill = function(circleSelection) {
+const updateNodeCircleFill = function(circleSelection) {
   circleSelection
       .style('fill', function(d) {
         if (d.selected) {
-          return '#DFFFD1';
+          return '#FFC3BF';
         } else {
-          return '#CDEAC0';
+          return '#FF928B';
         }
       });
 
   return circleSelection;
 };
 
-const updatePortVisible = function(circleSelection) {
-  circleSelection
-      .style('display', function(d) {
-        const node = env[d.nodeId];
-        return node.selected ? 'block' : 'none';
-      });
+// const enterNodeCircle = function(groupSelection) {
+//   return groupSelection.append('circle')
+//       .attr('r', thickness * 2)
+//       .style('stroke-width', 0);
+// }
 
-  return circleSelection;
-};
-
-const enterPort = function(groupSelection) {
-  const circleSelection = groupSelection.append('circle');
-
-  circleSelection
-      .attr('id', (d) => 'UUID-' + d.id)
-      .attr('class', 'port')
-      .attr('r', thickness)
-      .attr('cx', (d) => d.point[0])
-      .attr('cy', (d) => d.point[1])
-      .style('stroke-width', 0)
-      .on('click', portClick)
-      .call(
-          d3.drag()
-              .filter(dragFilter)
-              .on('start', portDragStarted)
-              .on('drag', portDragged)
-              .on('end', portDragEnded),
-      );
-
-  updatePortFill(circleSelection);
-  updatePortVisible(circleSelection);
-
-  return circleSelection;
-};
-
-const updatePort = function(circleSelection) {
-  updatePortFill(circleSelection);
-  updatePortVisible(circleSelection);
-
-  return circleSelection;
-};
-
-const dataSelect = function(data) {
-  if (data.selected) {
-    delete data.selected;
-  } else {
-    data.selected = true;
-  }
-};
-
-const nodeClick = function(e, d) {
-  dataSelect(d);
-  updateColor(d);
-  updatePortVisible(d3.select(this).selectAll('.port'));
-  e.stopPropagation();
-};
-
-const portClick = function(e, d) {
-  dataSelect(d);
-  updateColor(d);
-  console.log(env);
-  e.stopPropagation();
-};
-
-const edgeClick = function(e, d) {
-  dataSelect(d);
-  updateColor(d);
-  e.stopPropagation();
-};
-
-const updateNodeFill = function(circleSelection) {
-  circleSelection
-      .style('fill', function(d) {
-        if ('name' in d) {
-          if (d.selected) {
-            return '#DFFFD1';
-          } else {
-            return '#CDEAC0';
-          }
-        } else {
-          if (d.selected) {
-            return '#FFC3BF';
-          } else {
-            return '#FF928B';
-          }
-        }
-      });
-
-  return circleSelection;
-};
-
-const updateColor = function(data) {
-  switch (data.type) {
-    case 'node':
-      updateNodeFill(nodeSelection.selectAll('#UUID-' + data.id).select('circle'));
-      break;
-    case 'port':
-      updatePortFill(nodeSelection.selectAll('#UUID-' + data.id));
-      break;
-    case 'edge':
-      updateEdgeStroke(edgeSelection.selectAll('#UUID-' + data.id));
-      break;
-  }
-};
-
-const updateNodeText = function(textSelection) {
-  textSelection.text(function(d) {
-    // if (d.value != null) {
-    //   return d.value.toString();
-    // } else
-    if ('operator' in d) {
-      return hyperlogarithmicOperations[d.operator].commutation.symbol;
-    } else {
-      return d.name;
-    }
-  });
-
-  return textSelection;
-};
-
-const updateName = function(data) {
-  switch (data.type) {
-    case 'node':
-      updateNodeText(nodeSelection.selectAll('g').selectAll('text'));
-      updateNodeFill(nodeSelection.selectAll('#UUID-' + data.id).select('circle'));
-      break;
-  }
-};
+// const updateNodeCircle = updateNodeCircleFill
 
 const enterNode = function(selection) {
   const groupSelection = selection.append('g')
-      .attr('id', (d) => 'UUID-' + d.id)
-      .attr('class', 'node')
-      .attr('transform', function(d) {
-        return 'translate(' + d.point[0] + ',' + d.point[1] + ')';
-      })
+      .attr('id', entryId)
+      .attr('transform', d => 'translate(' + d[1].point.join(',') + ')')
+      // .on('contextmenu', (e) => e.preventDefault()); // respond to right-click
       .on('mouseover', nodeOver)
-      .on('mouseout', nodeOut)
-      .on('click', nodeClick)
-      .on('contextmenu', (e) => e.preventDefault()); // respond to right-click
+      .on('mouseout', nodeOut);
 
   groupSelection.call(
       d3.drag()
-          .filter(dragFilter)
+          //.filter(dragFilter) // respond to right-click
           .on('start', nodeDragStarted)
           .on('drag', nodeDragged)
           .on('end', nodeDragEnded),
   );
 
   const circleSelection = groupSelection.append('circle')
-      .attr('class', 'nodeCircle')
       .attr('r', thickness * 2)
       .style('stroke-width', 0);
 
-  updateNodeFill(circleSelection);
-
-  updateNodeText(groupSelection.append('text'));
+  updateNodeCircleFill(circleSelection);
 
   groupSelection
       .style('font-family', 'Roboto Mono, sans-serif')
@@ -514,83 +260,60 @@ const enterNode = function(selection) {
       .style('text-anchor', 'middle')
       .style('dominant-baseline', 'middle');
 
-  groupSelection.selectAll('.port')
-      .data(function(node) {
-        return Array.from(
-            envObjectsByIdsIterable(node, 'portIds'),
-        );
-      }, (d) => d.id)
-      .join(enterPort, updatePort);
-
   return groupSelection;
 };
 
 const updateNode = function(groupSelection) {
-  updateNodeFill(groupSelection.select('.nodeCircle'));
+  // Why does the circle disappear without this?
+  const circleSelection = groupSelection.append('circle')
+        .attr('r', thickness * 2)
+        .style('stroke-width', 0);
+  updateNodeCircleFill(circleSelection);
+
+  // updateNodeCircleFill(groupSelection.select('circle'));
+  updateNodePoint(groupSelection);
 
   return groupSelection;
 };
 
-const update = function() {
-  equationSelection.property('value', '');
-  calculationSelection.property('value', '');
+const refresh = function() {
+  // equationSelection.property('value', '');
+  // calculationSelection.property('value', '');
 
   edgeSelection
-      .selectAll('.edge')
-      .data(Object.entries(env).filter((a) => a[1].type == 'edge').map((a) => a[1]), (edge) => edge.id)
-      .join(enterEdge, updateEdge);
+    .selectAll("*")
+    .data(Object.entries(edges), entryKey)
+    .join(enterEdge, updateEdge);
 
   nodeSelection
-      .selectAll('.node')
-      .data(Object.entries(env).filter((a) => a[1].type == 'node').map((a) => a[1]), (node) => node.id)
-      .join(enterNode, updateNode);
+    .selectAll("*")
+    .data(Object.entries(nodes), entryKey)
+    .join(enterNode, updateNode);
 };
 
-const selectGraph = function(outerId, innerId) {
-  const outer = graphs[outerId];
-  const inner = outer[innerId];
+const selectGraph = function(categoryId, graphId) {
+  const category = graphs[categoryId];
+  const graph = category[graphId];
 
-  Object.keys(env).forEach((key) => delete env[key]);
-
-  const edges = {};
-  for (const nodeData of inner) {
-    const node = Object.assign({}, nodeData);
-    delete node['ports'];
-
-    node.id = crypto.randomUUID();
-    node.type = 'node';
-
-    env[node.id] = node;
-
-    for (const portData of objectIterable(nodeData, 'ports')) {
-      const port = Object.assign({}, portData);
-      delete port['edgeIds'];
-
-      port.id = crypto.randomUUID();
-      port.type = 'port';
-
-      env[port.id] = port;
-
-      for (const edgeData of objectIterable(portData, 'edgeIds')) {
-        let edge;
-        if (edgeData in edges) {
-          edge = edges[edgeData];
-        } else {
-          edge = {};
-          edge.id = crypto.randomUUID();
-          edge.type = 'edge';
-          edges[edgeData] = edge;
-
-          env[edge.id] = edge;
-        }
-        addToArray('portIds')(edge, port.id);
-        addToArray('edgeIds')(port, edge.id);
-      }
-
-      port['nodeId'] = node.id;
-      addToArray('portIds')(node, port.id);
-    }
+  Object.keys(nodes).forEach((key) => delete nodes[key]);
+  for (const [nodeId, node] of Object.entries(graph)) {
+    nodes[nodeId] = Object.assign({}, node);
   };
+
+  Object.keys(edges).forEach((key) => delete edges[key]);
+  for (const [fromId, from] of Object.entries(nodes)) {
+    for (const [toId] of Object.keys(from.env)) {
+      // Consider supporting self reference
+      if (fromId < toId) {
+        // TODO: vulnerable to injection
+        const edgeId = [fromId, toId].join('-');
+
+        const to = nodes[toId];
+        const edge = [from, to];
+        edges[edgeId] = edge;
+      }
+    }
+  }
 };
 
 const graphSelection = d3.select('#graphSelect');
@@ -600,17 +323,19 @@ const optgroups = graphSelection
     .data(Object.entries(graphs))
     .join((enter) => enter
         .append('optgroup')
-        .attr('label', (outerPair) => outerPair[0]),
+        .attr('label', (categoryPair) => categoryPair[0]),
     );
 
-optgroups.each(function(outerPair) {
+optgroups.each(function(categoryPair) {
   d3.select(this)
       .selectAll('option')
-      .data(Object.keys(outerPair[1]))
+      .data(Object.keys(categoryPair[1]))
       .join((enter) => enter
           .append('option')
-          .text((innerId) => innerId)
-          .attr('value', (innerId) => JSON.stringify([outerPair[0], innerId])),
+          .text((graphId) => graphId)
+            .attr('value', (graphId) => {
+              return JSON.stringify([categoryPair[0], graphId])
+            }),
       );
 });
 
@@ -618,11 +343,11 @@ graphSelection
     .on('change', function() {
       const selectedOption = d3.select(this).property('value');
 
-      const [outerId, innerId] = JSON.parse(selectedOption);
+      const [categoryId, graphId] = JSON.parse(selectedOption);
 
-      selectGraph(outerId, innerId);
-      update();
+      selectGraph(categoryId, graphId);
+      refresh();
     });
 
-selectGraph('one', 'identity');
-update();
+selectGraph('simple', 'one');
+refresh();
