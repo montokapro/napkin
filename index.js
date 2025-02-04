@@ -1,7 +1,7 @@
 'use strict';
 
 import {
-  graphs
+  graphs,
 } from './graphs.js';
 
 // import {hyperlogarithmicOperations} from './operations.js';
@@ -25,14 +25,13 @@ let draggedNodeEntry;
 const envEvaluateF = evaluateF((nodeId) => nodes[nodeId].env);
 const floatEvaluateF = envEvaluateF(floatCtx);
 const floatEvaluate = z(floatEvaluateF);
-const floatVisitF = floatEvaluateF(nodes);
 
 // const stringVisitF = stringEvaluateF(graph);
 
 // const envObjectsByIdsIterable = objectsByIdsIterable(graph);
 
-// const equationSelection = d3.select('#equation');
-// const calculationSelection = d3.select('#calculation');
+const equationSelection = d3.select('#equation');
+const calculationSelection = d3.select('#calculation');
 const displaySelection = d3.select('#display');
 
 // equationSelection.on('input', function(d) {
@@ -102,9 +101,6 @@ const nodeSelection = imageSelection
     .append('g')
     .attr('id', 'nodes');
 
-// const equationVisit = z(equationVisitF)([]);
-// const valueVisit = z(valueVisitF)([]);
-
 const nodeOver = function(e, d, i) {
   // const equationResult = equationVisit(d.id);
   // if (equationResult === undefined || equationResult.name === undefined) {
@@ -112,84 +108,84 @@ const nodeOver = function(e, d, i) {
   // } else {
   //   equationSelection.property('value', equationResult.name);
   // }
-  // const valueResult = valueVisit(d.id);
-  // if (valueResult === undefined) {
-  //   calculationSelection.property('value', '');
-  // } else {
-  //   calculationSelection.property('value', valueResult);
-  // }
+  const floatResult = floatEvaluate([d[0]]);
+  if (floatResult === undefined) {
+    calculationSelection.property('value', '');
+  } else {
+    calculationSelection.property('value', floatResult);
+  }
 };
 
 const nodeOut = function(e, d, i) {
-  // calculationSelection.property('value', '');
-  // equationSelection.property('value', '');
+  calculationSelection.property('value', '');
+  equationSelection.property('value', '');
 };
 
-const entryId = entry => 'UUID-' + entry[0];
-const entryKey = entry => '#UUID-' + entry[0];
+const entryId = (entry) => 'UUID-' + entry[0];
+const entryKey = (entry) => '#UUID-' + entry[0];
 
 const updateEdgePoints = function(lineSelection) {
   // Consider functions that return a constant distance from point
 
-  const fromX = d => {
-    const from = d[1][0]
-    const to = d[1][1]
+  const fromX = (d) => {
+    const from = d[1][0];
+    const to = d[1][1];
     if (from.op) {
-      return from.node.point[0] + ((to.node.point[0] - from.node.point[0]) / 4)
+      return from.node.point[0] + ((to.node.point[0] - from.node.point[0]) / 4);
     } else {
-      return from.node.point[0]
+      return from.node.point[0];
     }
   };
 
-  const fromY = d => {
-    const from = d[1][0]
-    const to = d[1][1]
+  const fromY = (d) => {
+    const from = d[1][0];
+    const to = d[1][1];
     if (from.op) {
-      return from.node.point[1] + ((to.node.point[1] - from.node.point[1]) / 4)
+      return from.node.point[1] + ((to.node.point[1] - from.node.point[1]) / 4);
     } else {
-      return from.node.point[1]
+      return from.node.point[1];
     }
   };
 
-  const toX = d => {
-    const from = d[1][0]
-    const to = d[1][1]
+  const toX = (d) => {
+    const from = d[1][0];
+    const to = d[1][1];
     if (to.op) {
-      return to.node.point[0] + ((from.node.point[0] - to.node.point[0]) / 4)
+      return to.node.point[0] + ((from.node.point[0] - to.node.point[0]) / 4);
     } else {
-      return to.node.point[0]
+      return to.node.point[0];
     }
   };
 
-  const toY = d => {
-    const from = d[1][0]
-    const to = d[1][1]
+  const toY = (d) => {
+    const from = d[1][0];
+    const to = d[1][1];
     if (to.op) {
-      return to.node.point[1] + ((from.node.point[1] - to.node.point[1]) / 4)
+      return to.node.point[1] + ((from.node.point[1] - to.node.point[1]) / 4);
     } else {
-      return to.node.point[1]
+      return to.node.point[1];
     }
   };
 
   return lineSelection
-    .attr("x1", fromX)
-    .attr("y1", fromY)
-    .attr("x2", toX)
-    .attr("y2", toY);
+      .attr('x1', fromX)
+      .attr('y1', fromY)
+      .attr('x2', toX)
+      .attr('y2', toY);
 };
 
 const enterEdge = function(selection) {
-  const lineSelection = selection.append('line')
+  const lineSelection = selection.append('line');
 
   lineSelection
       .attr('id', entryId)
       .attr('fill', 'none')
       .attr('pointer-events', 'stroke')
-      .attr('stroke-linecap', "round")
+      .attr('stroke-linecap', 'round')
       .attr('stroke-width', thickness)
-      .style("stroke", "#FF928B");
+      .style('stroke', '#FF928B');
 
-  updateEdgePoints(lineSelection)
+  updateEdgePoints(lineSelection);
 
   return lineSelection;
 };
@@ -206,7 +202,7 @@ const dragFilter = function(event) {
 
 const updateNodePoint = function(groupSelection) {
   return groupSelection
-    .attr('transform', d => 'translate(' + d[1].point.join(',') + ')');
+      .attr('transform', (d) => 'translate(' + d[1].point.join(',') + ')');
 };
 
 const modifyNodePoint = function(event, d) {
@@ -219,7 +215,7 @@ const modifyNodePoint = function(event, d) {
   const edgeIds = [];
   for (const [toId] of Object.keys(node.env)) {
     // TODO: vulnerable to injection
-    const edgeId = "#UUID-" + [nodeId, toId].sort().join('-');
+    const edgeId = '#UUID-' + [nodeId, toId].sort().join('-');
     edgeIds.unshift(edgeId);
   }
 
@@ -233,8 +229,8 @@ const nodeDragStarted = function(event, d) {
   draggedNodeEntry = d;
 
   nodeSelection
-    .selectAll('#UUID-' + draggedNodeEntry[0])
-    .attr('cursor', 'grabbing');
+      .selectAll('#UUID-' + draggedNodeEntry[0])
+      .attr('cursor', 'grabbing');
 };
 
 const nodeDragged = function(event, d) {
@@ -247,8 +243,8 @@ const nodeDragged = function(event, d) {
 
 const nodeDragEnded = function(event, d) {
   nodeSelection
-    .selectAll('#UUID-' + draggedNodeEntry[0])
-    .attr('cursor', 'grab');
+      .selectAll('#UUID-' + draggedNodeEntry[0])
+      .attr('cursor', 'grab');
 
   draggedNodeEntry = undefined;
 };
@@ -277,14 +273,14 @@ const updateNodeCircleFill = function(circleSelection) {
 const enterNode = function(selection) {
   const groupSelection = selection.append('g')
       .attr('id', entryId)
-      .attr('transform', d => 'translate(' + d[1].point.join(',') + ')')
+      .attr('transform', (d) => 'translate(' + d[1].point.join(',') + ')')
       // .on('contextmenu', (e) => e.preventDefault()); // respond to right-click
       .on('mouseover', nodeOver)
       .on('mouseout', nodeOut);
 
   groupSelection.call(
       d3.drag()
-          //.filter(dragFilter) // respond to right-click
+          // .filter(dragFilter) // respond to right-click
           .on('start', nodeDragStarted)
           .on('drag', nodeDragged)
           .on('end', nodeDragEnded),
@@ -309,8 +305,8 @@ const enterNode = function(selection) {
 const updateNode = function(groupSelection) {
   // TODO: Why does the circle disappear without this?
   const circleSelection = groupSelection.append('circle')
-        .attr('r', thickness * 2)
-        .style('stroke-width', 0);
+      .attr('r', thickness * 2)
+      .style('stroke-width', 0);
   updateNodeCircleFill(circleSelection);
 
   // updateNodeCircleFill(groupSelection.select('circle'));
@@ -324,14 +320,14 @@ const refresh = function() {
   // calculationSelection.property('value', '');
 
   edgeSelection
-    .selectAll("*")
-    .data(Object.entries(edges), entryKey)
-    .join(enterEdge, updateEdge);
+      .selectAll('*')
+      .data(Object.entries(edges), entryKey)
+      .join(enterEdge, updateEdge);
 
   nodeSelection
-    .selectAll("*")
-    .data(Object.entries(nodes), entryKey)
-    .join(enterNode, updateNode);
+      .selectAll('*')
+      .data(Object.entries(nodes), entryKey)
+      .join(enterNode, updateNode);
 };
 
 const selectGraph = function(categoryId, graphId) {
@@ -388,9 +384,9 @@ optgroups.each(function(categoryPair) {
       .join((enter) => enter
           .append('option')
           .text((graphId) => graphId)
-            .attr('value', (graphId) => {
-              return JSON.stringify([categoryPair[0], graphId])
-            }),
+          .attr('value', (graphId) => {
+            return JSON.stringify([categoryPair[0], graphId]);
+          }),
       );
 });
 
