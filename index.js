@@ -336,7 +336,7 @@ const selectGraph = function(categoryId, graphId) {
 
   Object.keys(edges).forEach((key) => delete edges[key]);
   for (const [fromId, from] of Object.entries(nodes)) {
-    for (const [toId, fromOp] of Object.keys(from.env)) {
+    for (const [toId, fromOp] of Object.entries(from.env)) {
       // Consider supporting self reference
       if (fromId < toId) {
         const nodeIds = [fromId, toId];
@@ -346,6 +346,8 @@ const selectGraph = function(categoryId, graphId) {
 
         const to = nodes[toId];
         const toOp = to.env[fromId];
+
+        console.log(fromOp);
 
         edges[edgeId] = [
           {
