@@ -4,14 +4,8 @@ import {
   graphs,
 } from './graphs.js';
 
-// import {hyperlogarithmicOperations} from './operations.js';
-import {addToArray, objectIterable, objectsByIdsIterable} from './struct.js';
-// import {envValueVisitF, envEquationVisitF, z} from './evaluate.js';
-
 import {
-  floatCtx, shiftValueToFloat, shiftCtx,
-  evaluateF, z, undefinedF,
-  graphEdges,
+  floatCtx, shiftValueToFloat, shiftCtx, evaluateF, z, undefinedF,
 } from './evaluate.js';
 
 const thickness = 1 / 16;
@@ -27,41 +21,9 @@ const floatEvaluate = z(floatEvaluateF);
 
 // const stringVisitF = stringEvaluateF(graph);
 
-// const envObjectsByIdsIterable = objectsByIdsIterable(graph);
-
 const equationSelection = d3.select('#equation');
 const calculationSelection = d3.select('#calculation');
 const displaySelection = d3.select('#display');
-
-// equationSelection.on('input', function(d) {
-//   const value = this.value;
-//   Object.entries(env).forEach(function(entry) {
-//     const data = entry[1];
-//     if (data.selected) {
-//       if (value === '') {
-//         delete data.name;
-//       } else {
-//         data.name = value;
-//       }
-//       updateName(data);
-//     }
-//   });
-// });
-
-// calculationSelection.on('input', function(d) {
-//   const value = this.value;
-//   Object.entries(graph).forEach(function(entry) {
-//     const data = entry[1];
-//     if (data.selected) {
-//       const float = parseFloat(value);
-//       if (isNaN(float)) {
-//         delete data.float;
-//       } else {
-//         data.float = float;
-//       }
-//     }
-//   });
-// });
 
 // const graphClick = function() {
 //   Object.entries(graph).forEach((e) => delete e[1].selected);
@@ -83,7 +45,8 @@ const svgSelection = displaySelection
     .append('svg')
     .attr('width', '100vw')
     .attr('height', '100vh')
-    .call(zoom);
+    .call(zoom)
+    .on('dblclick.zoom', null);
 
 const imageSelection = svgSelection
     .append('g')
@@ -99,12 +62,8 @@ const nodeSelection = imageSelection
     .attr('id', 'nodes');
 
 const nodeOver = function(e, d, i) {
-  // const equationResult = equationVisit(d.id);
-  // if (equationResult === undefined || equationResult.name === undefined) {
-  //   equationSelection.property('value', '');
-  // } else {
-  //   equationSelection.property('value', equationResult.name);
-  // }
+  equationSelection.property('value', d[1].name);
+
   const floatResult = floatEvaluate([d[0]]);
   if (floatResult === undefined) {
     calculationSelection.property('value', '');
@@ -193,9 +152,9 @@ const updateEdge = function(lineSelection) {
 
 // Respond to right click
 // https://github.com/d3/d3-drag/blob/v3.0.0/src/drag.js#L8-L11
-const dragFilter = function(event) {
-  return !event.ctrlKey && (event.button !== 0 || event.button !== 2);
-};
+// const dragFilter = function(event) {
+//   return !event.ctrlKey && (event.button !== 0 || event.button !== 2);
+// };
 
 const updateNodePoint = function(groupSelection) {
   return groupSelection
@@ -267,13 +226,27 @@ const updateNodeCircleFill = function(circleSelection) {
 
 // const updateNodeCircle = updateNodeCircleFill
 
+const nodePrompt = function(event, d) {
+  const value = prompt('Enter a name or value:').trim();
+
+  if (value === null) {
+    return;
+  }
+
+  d[1].name = value;
+
+  equationSelection.property('value', value);
+};
+
+
 const enterNode = function(selection) {
   const groupSelection = selection.append('g')
       .attr('id', entryId)
       .attr('transform', (d) => 'translate(' + d[1].point.join(',') + ')')
       // .on('contextmenu', (e) => e.preventDefault()); // respond to right-click
       .on('mouseover', nodeOver)
-      .on('mouseout', nodeOut);
+      .on('mouseout', nodeOut)
+      .on('dblclick', nodePrompt);
 
   groupSelection.call(
       d3.drag()
