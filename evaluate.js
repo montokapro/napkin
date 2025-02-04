@@ -79,6 +79,17 @@ const shiftCtx = {
   ),
 };
 
+// ['+' a b c]
+// ['↑' a b c]
+// ['↓' a b c]
+// ['=' a b c]
+// const stringCtx = {
+//   'identity': '0',
+//   'commutation': undefinedF((a, b) => a + ' + ' + b),
+//   'reversion': undefinedF((a, b) => a - b),
+//   'shift': undefinedF((value, up) => up ? shift(1, value) : shift(-1, value)),
+// };
+
 // Note that any two nodes may have at most one edge between them.
 //
 // Stack must not be empty.
