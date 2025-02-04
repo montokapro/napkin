@@ -14,8 +14,8 @@ import {
   graphEdges,
 } from './evaluate.js';
 
-const thickness = 1 / 8;
-const scale = 128;
+const thickness = 1 / 16;
+const scale = 256;
 
 const nodes = {};
 const edges = {};
@@ -129,11 +129,53 @@ const entryId = entry => 'UUID-' + entry[0];
 const entryKey = entry => '#UUID-' + entry[0];
 
 const updateEdgePoints = function(lineSelection) {
+  // Consider functions that return a constant distance from point
+
+  const fromX = d => {
+    const from = d[1][0]
+    const to = d[1][1]
+    if (from.op) {
+      return from.node.point[0] + ((to.node.point[0] - from.node.point[0]) / 4)
+    } else {
+      return from.node.point[0]
+    }
+  };
+
+  const fromY = d => {
+    const from = d[1][0]
+    const to = d[1][1]
+    if (from.op) {
+      return from.node.point[1] + ((to.node.point[1] - from.node.point[1]) / 4)
+    } else {
+      return from.node.point[1]
+    }
+  };
+
+  const toX = d => {
+    const from = d[1][0]
+    const to = d[1][1]
+    if (to.op) {
+      return to.node.point[0] + ((from.node.point[0] - to.node.point[0]) / 4)
+    } else {
+      return to.node.point[0]
+    }
+  };
+
+  const toY = d => {
+    const from = d[1][0]
+    const to = d[1][1]
+    if (to.op) {
+      return to.node.point[1] + ((from.node.point[1] - to.node.point[1]) / 4)
+    } else {
+      return to.node.point[1]
+    }
+  };
+
   return lineSelection
-    .attr("x1", d => d[1][0].point[0])
-    .attr("y1", d => d[1][0].point[1])
-    .attr("x2", d => d[1][1].point[0])
-    .attr("y2", d => d[1][1].point[1]);
+    .attr("x1", fromX)
+    .attr("y1", fromY)
+    .attr("x2", toX)
+    .attr("y2", toY);
 };
 
 const enterEdge = function(selection) {
@@ -143,6 +185,7 @@ const enterEdge = function(selection) {
       .attr('id', entryId)
       .attr('fill', 'none')
       .attr('pointer-events', 'stroke')
+      .attr('stroke-linecap', "round")
       .attr('stroke-width', thickness)
       .style("stroke", "#FF928B");
 
@@ -264,7 +307,7 @@ const enterNode = function(selection) {
 };
 
 const updateNode = function(groupSelection) {
-  // Why does the circle disappear without this?
+  // TODO: Why does the circle disappear without this?
   const circleSelection = groupSelection.append('circle')
         .attr('r', thickness * 2)
         .style('stroke-width', 0);
@@ -302,15 +345,27 @@ const selectGraph = function(categoryId, graphId) {
 
   Object.keys(edges).forEach((key) => delete edges[key]);
   for (const [fromId, from] of Object.entries(nodes)) {
-    for (const [toId] of Object.keys(from.env)) {
+    for (const [toId, fromOp] of Object.keys(from.env)) {
       // Consider supporting self reference
       if (fromId < toId) {
+        const nodeIds = [fromId, toId];
+
         // TODO: vulnerable to injection
-        const edgeId = [fromId, toId].join('-');
+        const edgeId = nodeIds.join('-');
 
         const to = nodes[toId];
-        const edge = [from, to];
-        edges[edgeId] = edge;
+        const toOp = to.env[fromId];
+
+        edges[edgeId] = [
+          {
+            node: from,
+            op: fromOp,
+          },
+          {
+            node: to,
+            op: toOp,
+          },
+        ];
       }
     }
   }
