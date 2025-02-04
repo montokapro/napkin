@@ -15,8 +15,25 @@ const edges = {};
 
 let draggedNodeEntry;
 
-const envEvaluateF = evaluateF((nodeId) => nodes[nodeId].env);
-const floatEvaluateF = envEvaluateF(floatCtx);
+const floatMemoEvaluateF = (f) => function(stack) {
+  const nodeId = stack[0];
+  const node = nodes[nodeId];
+
+  if ('float' in node) {
+    const fromId = stack[1];
+
+    if (node.env[fromId] === false) {
+      return node.float;
+    }
+  }
+
+  return f(stack);
+};
+
+const envVisit = (nodeId) => nodes[nodeId].env;
+const envEvaluateF = evaluateF(envVisit);
+const floatAllF = envEvaluateF(floatCtx);
+const floatEvaluateF = (visit) => floatAllF(floatMemoEvaluateF(visit));
 const floatEvaluate = z(floatEvaluateF);
 
 // const stringVisitF = stringEvaluateF(graph);
@@ -233,9 +250,17 @@ const nodePrompt = function(event, d) {
     return;
   }
 
-  d[1].name = value;
-
-  equationSelection.property('value', value);
+  if (value === '') {
+    delete d[1].name;
+    delete d[1].float;
+  } else {
+    const float = parseFloat(value);
+    if (isNaN(float)) {
+      d[1].name = value;
+    } else {
+      d[1].float = float;
+    }
+  }
 };
 
 
@@ -286,8 +311,8 @@ const updateNode = function(groupSelection) {
 };
 
 const refresh = function() {
-  // equationSelection.property('value', '');
-  // calculationSelection.property('value', '');
+  equationSelection.property('value', '');
+  calculationSelection.property('value', '');
 
   edgeSelection
       .selectAll('*')
@@ -392,7 +417,6 @@ const fitZoom = () => {
   ];
 
   svgSelection
-  // .call(zoom)
       .call(
           zoom.transform,
           d3.zoomIdentity
