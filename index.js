@@ -15,7 +15,6 @@ import {
 } from './evaluate.js';
 
 const thickness = 1 / 16;
-const scale = 256;
 
 const nodes = {};
 const edges = {};
@@ -51,7 +50,7 @@ const displaySelection = d3.select('#display');
 
 // calculationSelection.on('input', function(d) {
 //   const value = this.value;
-//   Object.entries(env).forEach(function(entry) {
+//   Object.entries(graph).forEach(function(entry) {
 //     const data = entry[1];
 //     if (data.selected) {
 //       const float = parseFloat(value);
@@ -84,13 +83,11 @@ const svgSelection = displaySelection
     .append('svg')
     .attr('width', '100vw')
     .attr('height', '100vh')
-    .call(zoom)
-    .call(zoom.transform, d3.zoomIdentity.scale(scale));
+    .call(zoom);
 
 const imageSelection = svgSelection
     .append('g')
     .attr('id', 'image')
-    .attr('transform', 'scale(' + scale + ')')
     .style('pointer-events', 'all');
 
 const edgeSelection = imageSelection
@@ -390,6 +387,48 @@ optgroups.each(function(categoryPair) {
       );
 });
 
+const fitZoom = () => {
+  const bounds = [
+    [Infinity, Infinity],
+    [-Infinity, -Infinity],
+  ];
+
+  for (const node of Object.values(nodes)) {
+    const point = node.point;
+    bounds[0][0] = Math.min(point[0], bounds[0][0]);
+    bounds[0][1] = Math.min(point[1], bounds[0][1]);
+    bounds[1][0] = Math.max(point[0], bounds[1][0]);
+    bounds[1][1] = Math.max(point[1], bounds[1][1]);
+  };
+
+  bounds[0][0] = bounds[0][0] - 1;
+  bounds[0][1] = bounds[0][1] - 1;
+  bounds[1][0] = bounds[1][0] + 1;
+  bounds[1][1] = bounds[1][1] + 1;
+
+  const displayBounds = displaySelection.node().getBoundingClientRect();
+
+  const ratio = Math.min(
+      displayBounds.width / (bounds[1][0] - bounds[0][0]),
+      displayBounds.height / (bounds[1][1] - bounds[0][1]),
+  );
+
+  const midpoint = [
+    (bounds[1][0] + bounds[0][0]) / 2,
+    (bounds[1][1] + bounds[0][1]) / 2,
+  ];
+
+  svgSelection
+  // .call(zoom)
+      .call(
+          zoom.transform,
+          d3.zoomIdentity
+              .translate(displayBounds.width / 2, displayBounds.height / 2)
+              .scale(ratio)
+              .translate(-midpoint[0], -midpoint[1]),
+      );
+};
+
 graphSelection
     .on('change', function() {
       const selectedOption = d3.select(this).property('value');
@@ -398,7 +437,9 @@ graphSelection
 
       selectGraph(categoryId, graphId);
       refresh();
+      fitZoom();
     });
 
 selectGraph('simple', 'one');
 refresh();
+fitZoom();
