@@ -75,10 +75,12 @@ describe('#evaluateF', () => {
           'a': {
             'env': {},
             'float': 0,
+            'string': '0',
           },
           'b': {
             'env': {},
             'float': 0,
+            'string': '0',
           },
         },
     );
@@ -93,12 +95,14 @@ describe('#evaluateF', () => {
               'b': false,
             },
             'float': 0,
+            'string': '0 = 0',
           },
           'b': {
             'env': {
               'a': false,
             },
             'float': 0,
+            'string': '0 = 0',
           },
         },
     );
@@ -475,7 +479,35 @@ describe('#isEqualF', () => {
     graph = {
       'a': {
         'env': {
+          'b': true,
+          'c': true,
+        },
+      },
+      'b': {
+        'env': {
+          'a': true,
+          'c': false,
+        },
+      },
+      'c': {
+        'env': {
+          'a': true,
           'b': false,
+        },
+      },
+    };
+
+    const expected = true;
+    const actual = isEqualF(env)(() => {})('b', 'c');
+
+    assert.equal(expected, actual);
+  });
+
+  it('like equal', () => {
+    graph = {
+      'a': {
+        'env': {
+          'b': true,
           'c': true,
         },
       },
@@ -483,18 +515,31 @@ describe('#isEqualF', () => {
         'env': {
           'a': false,
           'c': true,
+          'd': false,
         },
       },
       'c': {
         'env': {
-          'a': true,
+          'a': false,
           'b': true,
+          'e': false,
+        },
+      },
+      'd': {
+        'env': {
+          'b': false,
+
+        },
+      },
+      'e': {
+        'env': {
+          'b': false,
         },
       },
     };
 
     const expected = true;
-    const actual = isEqualF(env)(() => {})('a', 'b');
+    const actual = isEqualF(env)(() => {})('d', 'e');
 
     assert.equal(expected, actual);
   });

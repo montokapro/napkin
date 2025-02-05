@@ -5,7 +5,7 @@ import {
 } from './graphs.js';
 
 import {
-  floatCtx, shiftValueToFloat, shiftCtx, evaluateF, z, undefinedF,
+  floatCtx, evaluateF, z,
 } from './evaluate.js';
 
 const thickness = 1 / 16;
@@ -15,25 +15,23 @@ const edges = {};
 
 let draggedNodeEntry;
 
-const floatMemoEvaluateF = (f) => function(stack) {
+const envVisit = (nodeId) => nodes[nodeId].env;
+
+const floatEvaluateF = (f) => function(stack) {
   const nodeId = stack[0];
   const node = nodes[nodeId];
 
   if ('float' in node) {
     const fromId = stack[1];
 
-    if (node.env[fromId] === false) {
+    if (!node.env[fromId]) {
       return node.float;
     }
   }
 
-  return f(stack);
+  return evaluateF(envVisit)(floatCtx)(f)(stack);
 };
 
-const envVisit = (nodeId) => nodes[nodeId].env;
-const envEvaluateF = evaluateF(envVisit);
-const floatAllF = envEvaluateF(floatCtx);
-const floatEvaluateF = (visit) => floatAllF(floatMemoEvaluateF(visit));
 const floatEvaluate = z(floatEvaluateF);
 
 // const stringVisitF = stringEvaluateF(graph);
@@ -98,7 +96,7 @@ const entryId = (entry) => 'UUID-' + entry[0];
 const entryKey = (entry) => '#UUID-' + entry[0];
 
 const updateEdgePoints = function(lineSelection) {
-  // Consider functions that return a constant distance from point
+  // Consider functions that return a constant distance from endpoints
 
   const fromX = (d) => {
     const from = d[1][0];
@@ -244,7 +242,7 @@ const updateNodeCircleFill = function(circleSelection) {
 // const updateNodeCircle = updateNodeCircleFill
 
 const nodePrompt = function(event, d) {
-  const value = prompt('Enter a name or value:').trim();
+  const value = prompt('Enter a name or value:');
 
   if (value === null) {
     return;

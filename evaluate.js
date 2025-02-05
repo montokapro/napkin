@@ -1,5 +1,5 @@
-import {hyperlogarithmicOperations} from './operations.js';
-import {objectIterable} from './struct.js';
+// import {hyperlogarithmicOperations} from './operations.js';
+// import {objectIterable} from './struct.js';
 
 // const prettyNumber = function(number) {
 //   switch (number) {
@@ -144,12 +144,12 @@ const evaluateF = (env) => (ctx) => (f) => function(stack) {
     }
   }
 
-  // console.log(stack)
-  // console.log(fromOp)
-  // console.log(equal)
-  // console.log(aggregation)
-  // console.log(result)
-  // console.log("")
+  // console.log(stack);
+  // console.log(fromOp);
+  // console.log(equal);
+  // console.log(aggregation);
+  // console.log(result);
+  // console.log('');
 
   return result;
 };
