@@ -4,6 +4,8 @@ import {
   graphEdges,
 } from '../evaluate.js';
 
+import graphs from '../graphs.js';
+
 import assert from 'assert';
 
 const isClose = function(a, b, tolerance = 1e-10) {
@@ -12,6 +14,13 @@ const isClose = function(a, b, tolerance = 1e-10) {
   } else {
     return Math.abs(a - b) <= tolerance;
   }
+};
+
+const assertClose = function(expected, actual) {
+  assert(
+      isClose(expected, actual),
+      `${expected} ~= ${actual}`,
+  );
 };
 
 const assertValues = function(graph) {
@@ -68,106 +77,65 @@ const assertValues = function(graph) {
   }
 };
 
+describe('graphs', () => {
+  for (const [categoryId, category] of Object.entries(graphs)) {
+    describe(categoryId, () => {
+      for (const [graphId, graph] of Object.entries(category)) {
+        const envVisit = (nodeId) => graph[nodeId].env;
+
+        const memoFloatVisitF = (f) => function(stack) {
+          const nodeId = stack[0];
+          const node = graph[nodeId];
+
+          if ('memo' in node && 'float' in node.memo) {
+            const fromId = stack[1];
+
+            if (node.env[fromId] === false) {
+              return node.memo.float;
+            }
+          }
+
+          return f(stack);
+        };
+
+        const f = evaluateF(envVisit);
+
+        const floatAll = f(floatCtx);
+        const floatOne = (visit) => floatAll(memoFloatVisitF(visit));
+        const evalFloatAll = z(floatAll);
+        const evalFloatOne = z(floatOne);
+
+        const evalShiftAll = z(f(shiftCtx));
+
+        describe(graphId, () => {
+          for (const [nodeId, node] of Object.entries(graph)) {
+            describe(nodeId, () => {
+              // Only check nodes with a value
+              if ('memo' in node && 'float' in node.memo) {
+                const expected = node.memo.float;
+
+                it('float one', () => {
+                  assertClose(expected, evalFloatOne([nodeId]));
+                });
+
+                it('float all', () => {
+                  assertClose(expected, evalFloatAll([nodeId]));
+                });
+
+                it('shift all', () => {
+                  const format = undefinedF(shiftValueToFloat);
+                  assertClose(expected, format(evalShiftAll([nodeId])));
+                });
+              }
+            });
+          }
+        });
+      }
+    });
+  }
+});
+
 describe('#evaluateF', () => {
-  it('no edge', () => {
-    assertValues(
-        {
-          'a': {
-            'env': {},
-            'float': 0,
-            'string': '0',
-          },
-          'b': {
-            'env': {},
-            'float': 0,
-            'string': '0',
-          },
-        },
-    );
-  });
-
-  // a == b
-  it('eq edge', () => {
-    assertValues(
-        {
-          'a': {
-            'env': {
-              'b': false,
-            },
-            'float': 0,
-            'string': '0 = 0',
-          },
-          'b': {
-            'env': {
-              'a': false,
-            },
-            'float': 0,
-            'string': '0 = 0',
-          },
-        },
-    );
-  });
-
-  // a -- b
-  it('op edge', () => {
-    assertValues(
-        {
-          'a': {
-            'env': {
-              'b': true,
-            },
-            'float': undefined,
-          },
-          'b': {
-            'env': {
-              'a': true,
-            },
-            'float': undefined,
-          },
-        },
-    );
-  });
-
-  // a -= b
-  it('forward edge', () => {
-    assertValues(
-        {
-          'a': {
-            'env': {
-              'b': true,
-            },
-            'float': -Infinity,
-          },
-          'b': {
-            'env': {
-              'a': false,
-            },
-            'float': 0,
-          },
-        },
-    );
-  });
-
-  // a =- b
-  it('backward edge', () => {
-    assertValues(
-        {
-          'a': {
-            'env': {
-              'b': false,
-            },
-            'float': 0,
-          },
-          'b': {
-            'env': {
-              'a': true,
-            },
-            'float': -Infinity,
-          },
-        },
-    );
-  });
-
   // a == b
   // b -= c
   // c -- d

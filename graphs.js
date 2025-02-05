@@ -1,11 +1,13 @@
 // Assume javascript interpreter retains order of hashmaps
-const graphs = {
+export default {
   simple: {
     one: {
-      // equal
       'a': {
         point: [0, 0],
         env: {
+        },
+        memo: {
+          float: 0,
         },
       },
     },
@@ -16,11 +18,17 @@ const graphs = {
         env: {
           'b': false,
         },
+        memo: {
+          float: 0,
+        },
       },
       'b': {
         point: [1, 0],
         env: {
           'a': false,
+        },
+        memo: {
+          float: 0,
         },
       },
       // shift
@@ -29,11 +37,17 @@ const graphs = {
         env: {
           'd': false,
         },
+        memo: {
+          float: 0,
+        },
       },
       'd': {
         point: [1, 1],
         env: {
           'c': true,
+        },
+        memo: {
+          float: -Infinity,
         },
       },
       // operation
@@ -42,11 +56,17 @@ const graphs = {
         env: {
           'f': true,
         },
+        memo: {
+          float: undefined,
+        },
       },
       'f': {
         point: [1, 2],
         env: {
           'e': true,
+        },
+        memo: {
+          float: undefined,
         },
       },
     },
@@ -57,6 +77,9 @@ const graphs = {
         env: {
           'b': false,
         },
+        memo: {
+          float: 0,
+        },
       },
       'b': {
         point: [1, 0],
@@ -64,18 +87,27 @@ const graphs = {
           'a': false,
           'c': false,
         },
+        memo: {
+          float: 0,
+        },
       },
       'c': {
         point: [2, 0],
         env: {
           'b': false,
         },
+        memo: {
+          float: 0,
+        },
       },
-      // shift down
+      // shift in
       'd': {
         point: [0, 1],
         env: {
           'e': false,
+        },
+        memo: {
+          float: 0,
         },
       },
       'e': {
@@ -84,18 +116,27 @@ const graphs = {
           'd': true,
           'f': true,
         },
+        memo: {
+          float: -Infinity,
+        },
       },
       'f': {
         point: [2, 1],
         env: {
           'd': false,
         },
+        memo: {
+          float: 0,
+        },
       },
-      // shift up
+      // shift out
       'g': {
         point: [0, 2],
         env: {
           'h': true,
+        },
+        memo: {
+          float: -Infinity,
         },
       },
       'h': {
@@ -104,11 +145,17 @@ const graphs = {
           'g': false,
           'j': false,
         },
+        memo: {
+          float: 0,
+        },
       },
       'j': {
         point: [2, 2],
         env: {
           'h': true,
+        },
+        memo: {
+          float: -Infinity,
         },
       },
       // operation
@@ -117,6 +164,9 @@ const graphs = {
         env: {
           'l': true,
         },
+        memo: {
+          float: undefined,
+        },
       },
       'l': {
         point: [1, 3],
@@ -124,15 +174,19 @@ const graphs = {
           'k': true,
           'm': true,
         },
+        memo: {
+          float: undefined,
+        },
       },
       'm': {
         point: [2, 3],
         env: {
           'l': true,
         },
+        memo: {
+          float: undefined,
+        },
       },
     },
   },
 };
-
-export {graphs};

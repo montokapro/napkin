@@ -1,8 +1,6 @@
 'use strict';
 
-import {
-  graphs,
-} from './graphs.js';
+import graphs from './graphs.js';
 
 import {
   floatCtx, evaluateF, z,
