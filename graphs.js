@@ -188,5 +188,101 @@ export default {
         },
       },
     },
+    four: {
+      // one
+      'a': {
+        point: [0, 0],
+        env: {
+          'b': false,
+        },
+        memo: {
+          float: 0,
+        },
+      },
+      'b': {
+        point: [1, 0],
+        env: {
+          'a': false,
+          'c': true,
+        },
+        memo: {
+          float: 0,
+        },
+      },
+      // shift
+      'c': {
+        point: [2, 0],
+        env: {
+          'b': false,
+          'd': true,
+        },
+        memo: {
+          float: 1,
+        },
+      },
+      'd': {
+        point: [3, 0],
+        env: {
+          'c': true,
+        },
+        memo: {
+          float: 1,
+        },
+      },
+    },
+  },
+  test: {
+    sum: {
+      'a': {
+        point: [0, 0],
+        env: {
+          'b': false,
+        },
+        memo: {
+          'float': 0,
+        },
+      },
+      'b': {
+        point: [0, 1],
+        env: {
+          'a': false,
+          'c': true,
+        },
+        memo: {
+          'float': 0,
+        },
+      },
+      'c': {
+        point: [1, 0],
+        env: {
+          'b': false,
+          'd': false,
+          'e': true,
+        },
+        memo: {
+          'float': 1,
+        },
+      },
+      'd': {
+        point: [1, 1],
+        env: {
+          'c': false,
+          'e': true,
+        },
+        memo: {
+          'float': 1,
+        },
+      },
+      'e': {
+        point: [2, 0],
+        env: {
+          'c': true,
+          'd': true,
+        },
+        memo: {
+          'float': 2,
+        },
+      },
+    },
   },
 };
