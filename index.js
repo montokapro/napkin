@@ -182,7 +182,7 @@ const modifyNodePoint = function(event, d) {
   updateNodePoint(nodeSelection.selectAll('#UUID-' + nodeId));
 
   const edgeIds = [];
-  for (const [toId] of Object.keys(node.env)) {
+  for (const toId of Object.keys(node.env)) {
     // TODO: vulnerable to injection
     const edgeId = '#UUID-' + [nodeId, toId].sort().join('-');
     edgeIds.unshift(edgeId);
@@ -264,6 +264,7 @@ const enterNode = function(selection) {
   const groupSelection = selection.append('g')
       .attr('id', entryId)
       .attr('transform', (d) => 'translate(' + d[1].point.join(',') + ')')
+      .attr('cursor', 'grab')
       // .on('contextmenu', (e) => e.preventDefault()); // respond to right-click
       .on('mouseover', nodeOver)
       .on('mouseout', nodeOut)
@@ -342,8 +343,6 @@ const selectGraph = function(categoryId, graphId) {
 
         const to = nodes[toId];
         const toOp = to.env[fromId];
-
-        console.log(fromOp);
 
         edges[edgeId] = [
           {
