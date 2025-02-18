@@ -231,6 +231,154 @@ export default {
       },
     },
   },
+  user: {
+    operation: {
+      // addition
+      'a': {
+        point: [0, 0],
+        env: {
+          'b': true,
+        },
+      },
+      'b': {
+        point: [1, 1],
+        env: {
+          'a': true,
+          'c': true,
+        },
+      },
+      'c': {
+        point: [0, 2],
+        env: {
+          'b': true,
+        },
+      },
+      // multiplication
+      'd': {
+        point: [0, 3],
+        env: {
+          'e': true,
+        },
+      },
+      'e': {
+        point: [1, 3],
+        env: {
+          'd': true,
+          'h': false,
+        },
+      },
+      'f': {
+        point: [0, 5],
+        env: {
+          'g': true,
+        },
+      },
+      'g': {
+        point: [1, 5],
+        env: {
+          'f': true,
+          'h': false,
+        },
+      },
+      'h': {
+        point: [2, 4],
+        env: {
+          'e': true,
+          'g': true,
+          'i': false,
+        },
+      },
+      'i': {
+        point: [3, 4],
+        env: {
+          'h': false,
+          'j': true,
+        },
+      },
+      'j': {
+        point: [4, 4],
+        env: {
+          'i': false,
+          'k': true,
+        },
+      },
+      'k': {
+        point: [5, 4],
+        env: {
+          'j': true,
+        },
+      },
+      // exponentiation
+      'l': {
+        point: [1, 6],
+        env: {
+          'm': true,
+        },
+      },
+      'm': {
+        point: [2, 6],
+        env: {
+          'l': true,
+          'q': false,
+        },
+      },
+      'n': {
+        point: [0, 8],
+        env: {
+          'o': true,
+        },
+      },
+      'o': {
+        point: [1, 8],
+        env: {
+          'n': true,
+          'p': false,
+        },
+      },
+      'p': {
+        point: [2, 8],
+        env: {
+          'o': true,
+          'q': false,
+        },
+      },
+      'q': {
+        point: [3, 7],
+        env: {
+          'm': true,
+          'p': true,
+          'r': false,
+        },
+      },
+      'r': {
+        point: [4, 7],
+        env: {
+          'q': false,
+          's': true,
+        },
+      },
+      's': {
+        point: [5, 7],
+        env: {
+          'r': false,
+          't': true,
+        },
+      },
+      't': {
+        point: [6, 7],
+        env: {
+          's': false,
+          'u': true,
+        },
+      },
+      'u': {
+        point: [7, 7],
+        env: {
+          't': true,
+        },
+      },
+    },
+  },
   test: {
     sum: {
       'a': {
@@ -335,7 +483,7 @@ export default {
           '1b': true,
           '2b': false,
           'v6a': false,
-          'v9a': false,
+          'vv9a': false,
         },
         memo: {
           'float': 2,
@@ -374,7 +522,7 @@ export default {
         },
       },
       '3a': {
-        point: [2, 1],
+        point: [3, 1],
         env: {
           '1c': true,
           '1d': true,
@@ -458,7 +606,7 @@ export default {
         },
       },
       'v3a': {
-        point: [6, 2],
+        point: [4, 1],
         env: {
           '3a': true,
           'vv9a': false,
@@ -468,7 +616,7 @@ export default {
         },
       },
       'vv9a': {
-        point: [5, 2],
+        point: [3, 2],
         env: {
           '2a': true,
           'v3a': true,
@@ -479,7 +627,7 @@ export default {
         },
       },
       'vv9b': {
-        point: [4, 2],
+        point: [3, 3],
         env: {
           'vv9a': false,
           'v9a': true,
@@ -489,9 +637,8 @@ export default {
         },
       },
       'v9a': {
-        point: [3, 2],
+        point: [3, 4],
         env: {
-          // '2a': true, TODO, broken link
           'vv9b': false,
           '9a': true,
         },
@@ -500,7 +647,7 @@ export default {
         },
       },
       '9a': {
-        point: [3, 3],
+        point: [3, 5],
         env: {
           'v9a': false,
           '9b': true,
@@ -510,7 +657,7 @@ export default {
         },
       },
       '9b': {
-        point: [3, 4],
+        point: [3, 6],
         env: {
           '9a': true,
         },
