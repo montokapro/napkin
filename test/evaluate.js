@@ -31,6 +31,7 @@ describe('graphs', () => {
           env: (nodeId) => graph[nodeId].env,
           ...floatCtx,
         });
+        const floatAll = z(floatAllF);
 
         const floatOneF = evaluateF({
           unit: (stack) => {
@@ -46,8 +47,6 @@ describe('graphs', () => {
           env: (nodeId) => graph[nodeId].env,
           ...floatCtx,
         });
-
-        const floatAll = z(floatAllF);
         const floatOne = z(floatOneF);
 
         const shiftAllF = evaluateF({
@@ -55,7 +54,6 @@ describe('graphs', () => {
           env: (nodeId) => graph[nodeId].env,
           ...shiftCtx,
         });
-
         const shiftAll = z(shiftAllF);
 
         describe(graphId, () => {
