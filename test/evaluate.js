@@ -1,7 +1,6 @@
 import {
   floatCtx, shiftValueToFloat, shiftCtx,
   evaluateF, isEqualF, z, undefinedF,
-  graphEdges,
 } from '../evaluate.js';
 
 import graphs from '../graphs.js';
@@ -27,31 +26,37 @@ describe('graphs', () => {
   for (const [categoryId, category] of Object.entries(graphs)) {
     describe(categoryId, () => {
       for (const [graphId, graph] of Object.entries(category)) {
-        const envVisit = (nodeId) => graph[nodeId].env;
+        const floatAllF = evaluateF({
+          unit: (stack) => undefined,
+          env: (nodeId) => graph[nodeId].env,
+          ...floatCtx,
+        });
 
-        const memoFloatVisitF = (f) => function(stack) {
-          const nodeId = stack[0];
-          const node = graph[nodeId];
-
-          if ('memo' in node && 'float' in node.memo) {
-            const fromId = stack[1];
-
-            if (node.env[fromId] === false) {
-              return node.memo.float;
+        const floatOneF = evaluateF({
+          unit: (stack) => {
+            if (stack.length > 1) {
+              const node = graph[stack[0]];
+              if ('memo' in node && 'float' in node.memo) {
+                return node.memo.float;
+              }
             }
-          }
 
-          return f(stack);
-        };
+            return undefined;
+          },
+          env: (nodeId) => graph[nodeId].env,
+          ...floatCtx,
+        });
 
-        const f = evaluateF(envVisit);
+        const floatAll = z(floatAllF);
+        const floatOne = z(floatOneF);
 
-        const floatAll = f(floatCtx);
-        const floatOne = (visit) => floatAll(memoFloatVisitF(visit));
-        const evalFloatAll = z(floatAll);
-        const evalFloatOne = z(floatOne);
+        const shiftAllF = evaluateF({
+          unit: (stack) => undefined,
+          env: (nodeId) => graph[nodeId].env,
+          ...shiftCtx,
+        });
 
-        const evalShiftAll = z(f(shiftCtx));
+        const shiftAll = z(shiftAllF);
 
         describe(graphId, () => {
           for (const [nodeId, node] of Object.entries(graph)) {
@@ -61,16 +66,16 @@ describe('graphs', () => {
                 const expected = node.memo.float;
 
                 it('float one', () => {
-                  assertClose(expected, evalFloatOne([nodeId]));
+                  assertClose(expected, floatOne([nodeId]));
                 });
 
                 it('float all', () => {
-                  assertClose(expected, evalFloatAll([nodeId]));
+                  assertClose(expected, floatAll([nodeId]));
                 });
 
                 it('shift all', () => {
                   const format = undefinedF(shiftValueToFloat);
-                  assertClose(expected, format(evalShiftAll([nodeId])));
+                  assertClose(expected, format(shiftAll([nodeId])));
                 });
               }
             });
@@ -170,72 +175,5 @@ describe('#isEqualF', () => {
     const actual = isEqualF(env)(() => {})('d', 'e');
 
     assert.equal(expected, actual);
-  });
-});
-
-describe('#graphEdges', () => {
-  it('no edge', () => {
-    const graph = {
-      'a': {
-        'env': {},
-        'float': 0,
-      },
-      'b': {
-        'env': {},
-        'float': 0,
-      },
-    };
-
-    const expected = [];
-
-    assert.deepEqual(expected, graphEdges(graph));
-  });
-
-  // a == b
-  it('eq edge', () => {
-    const graph = {
-      'a': {
-        'env': {
-          'b': false,
-        },
-        'float': 0,
-      },
-      'b': {
-        'env': {
-          'a': false,
-        },
-        'float': 0,
-      },
-    };
-
-    const expected = [
-      ['a-b', [graph['a'], graph['b']]],
-    ];
-
-    assert.deepEqual(expected, graphEdges(graph));
-  });
-
-  // a -- b
-  it('op edge', () => {
-    const graph = {
-      'a': {
-        'env': {
-          'b': true,
-        },
-        'float': undefined,
-      },
-      'b': {
-        'env': {
-          'a': true,
-        },
-        'float': undefined,
-      },
-    };
-
-    const expected = [
-      ['a-b', [graph['a'], graph['b']]],
-    ];
-
-    assert.deepEqual(expected, graphEdges(graph));
   });
 });

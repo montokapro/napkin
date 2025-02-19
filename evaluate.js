@@ -93,8 +93,8 @@ const shiftCtx = {
 // Note that any two nodes may have at most one edge between them.
 //
 // Stack must not be empty.
-const evaluateF = (env) => (ctx) => (f) => function(stack) {
-  const edges = Object.entries(env(stack[0]));
+const evaluateF = (ctx) => (f) => function(stack) {
+  const edges = Object.entries(ctx.env(stack[0]));
 
   const visit = function(id) {
     stack.unshift(id);
@@ -104,7 +104,7 @@ const evaluateF = (env) => (ctx) => (f) => function(stack) {
   };
 
   let fromOp = false;
-  let equal = undefined;
+  let equal = ctx.unit(stack);
   let aggregation = ctx.identity;
   for (const [toId, toOp] of edges) {
     const toIndex = stack.indexOf(toId);
@@ -180,23 +180,7 @@ const z = function(f) {
   return g(g);
 };
 
-const graphEdges = function(graph) {
-  const edges = [];
-  for (const [fromId, from] of Object.entries(graph)) {
-    for (const [toId] of Object.keys(from.env)) {
-      if (fromId <= toId) {
-        const edgeId = [fromId, toId].join('-');
-        const to = graph[toId];
-        const edge = [from, to];
-        edges.unshift([edgeId, edge]);
-      }
-    }
-  }
-  return edges;
-};
-
 export {
   floatCtx, shiftValueToFloat, shiftCtx,
   evaluateF, isEqualF, z, undefinedF,
-  graphEdges,
 };

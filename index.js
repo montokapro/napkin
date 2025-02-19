@@ -13,31 +13,20 @@ const edges = {};
 
 let draggedNodeEntry;
 
-const envVisit = (nodeId) => nodes[nodeId].env;
-
-const floatMemoF = (f) => function(stack) {
-  const nodeId = stack[0];
-  const node = nodes[nodeId];
-
-  console.log(node);
-
-  if ('float' in node) {
-    const fromId = stack[1];
-
-    if (node.env[fromId]) {
-      // TODO: this is only true if this is the only op edge
-      return floatCtx.shift(node.float, true);
-    } else {
+const floatEvaluateF = evaluateF({
+  unit: (stack) => {
+    const node = nodes[stack[0]];
+    if ('float' in node) {
       return node.float;
     }
-  }
 
-  return f(stack);
-};
+    return undefined;
+  },
+  env: (nodeId) => nodes[nodeId].env,
+  ...floatCtx,
+});
 
-const floatEvaluateF = evaluateF(envVisit)(floatCtx);
-
-const floatMemoEvaluate = z((f) => floatMemoF(floatEvaluateF(f)));
+const floatEvaluate = z(floatEvaluateF);
 
 // const stringVisitF = stringEvaluateF(graph);
 
@@ -84,7 +73,7 @@ const nodeSelection = imageSelection
 const nodeOver = function(e, d, i) {
   equationSelection.property('value', d[1].name);
 
-  const floatResult = floatMemoEvaluate([d[0]]);
+  const floatResult = floatEvaluate([d[0]]);
   if (floatResult === undefined) {
     calculationSelection.property('value', '');
   } else {
