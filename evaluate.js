@@ -54,20 +54,34 @@ const shiftCtx = {
     'float': 0,
   },
   'commutation': undefinedF(
-      (a, b) => (
-        {
-          'shift': 0,
-          'float': shiftValueToFloat(a) + shiftValueToFloat(b),
+      (a, b) => {
+        if (Math.min(a.shift, b.shift) > 0) {
+          return {
+            'shift': 1,
+            'float': shift(a.shift - 1, a.float) * shift(b.shift - 1, b.float),
+          };
+        } else {
+          return {
+            'shift': 0,
+            'float': shift(a.shift, a.float) + shift(b.shift, b.float),
+          };
         }
-      ),
+      },
   ),
   'reversion': undefinedF(
-      (a, b) => (
-        {
-          'shift': 0,
-          'float': shiftValueToFloat(a) - shiftValueToFloat(b),
+      (a, b) => {
+        if (Math.min(a.shift, b.shift) > 0) {
+          return {
+            'shift': 1,
+            'float': shift(a.shift - 1, a.float) / shift(b.shift - 1, b.float),
+          };
+        } else {
+          return {
+            'shift': 0,
+            'float': shift(a.shift, a.float) - shift(b.shift, b.float),
+          };
         }
-      ),
+      },
   ),
   'shift': undefinedF(
       (value, up) => (
@@ -80,10 +94,12 @@ const shiftCtx = {
 };
 
 const stringCtx = {
-  'identity': '',
+  'identity': '0',
   'commutation': undefinedF((a, b) => a + ' + ' + b),
-  'reversion': undefinedF((a, b) => a - b),
-  'shift': undefinedF((value, up) => up ? shift(1, value) : shift(-1, value)),
+  'reversion': undefinedF((a, b) => a + ' - ' + b),
+  'shift': undefinedF(
+      (value, up) => up ? '⌈' + value + '⌉' : '⌊' + value + '⌋',
+  ),
 };
 
 // Note that any two nodes may have at most one edge between them.
