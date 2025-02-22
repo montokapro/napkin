@@ -3,7 +3,9 @@
 import graphs from './graphs.js';
 
 import {
-  shiftFloat, shiftFloatCtx, stringCtx, evaluateF, z,
+  shiftFloatValue, shiftFloatCtx,
+  shiftStringValue, shiftStringCtx,
+  evaluateF, z,
 } from './evaluate.js';
 
 const thickness = 1 / 16;
@@ -35,13 +37,16 @@ const equateF = evaluateF({
   unit: (stack) => {
     const node = nodes[stack[0]];
     if ('name' in node) {
-      return node.name;
+      return {
+        'shift': 0,
+        'string': node.name,
+      };
     }
 
     return undefined;
   },
   env: (nodeId) => nodes[nodeId].env,
-  ...stringCtx,
+  ...shiftStringCtx,
 });
 const equate = z(equateF);
 
@@ -87,14 +92,14 @@ const nodeSelection = imageSelection
     .attr('id', 'nodes');
 
 const nodeOver = function(e, d, i) {
-  const equation = equate([d[0]]);
+  const equation = shiftStringValue(equate([d[0]]));
   if (equation === undefined) {
     equationSelection.property('value', '');
   } else {
     equationSelection.property('value', equation);
   }
 
-  const calculation = shiftFloat(calculate([d[0]]));
+  const calculation = shiftFloatValue(calculate([d[0]]));
   if (calculation === undefined) {
     calculationSelection.property('value', '');
   } else {

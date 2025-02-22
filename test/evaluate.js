@@ -1,5 +1,5 @@
 import {
-  floatCtx, shiftFloat, shiftFloatCtx,
+  floatCtx, shiftFloatValue, shiftFloatCtx,
   evaluateF, isEqualF, z,
 } from '../evaluate.js';
 
@@ -74,7 +74,7 @@ describe('graphs', () => {
                 it('shift all', () => {
                   // Equality isn't guaranteed,
                   // but it is likely due to integer-preserving optimizations
-                  assert.equal(expected, shiftFloat(shiftAll([nodeId])));
+                  assert.equal(expected, shiftFloatValue(shiftAll([nodeId])));
                 });
               }
             });

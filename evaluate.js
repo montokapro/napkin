@@ -23,7 +23,7 @@ const undefinedF = (f) => function(...args) {
 };
 
 // Assumes n is a safe integer
-const shift = function(n, float) {
+const shiftFloat = function(n, float) {
   let i = 0;
   if (n >= 0) {
     while (i < n) {
@@ -39,15 +39,17 @@ const shift = function(n, float) {
   return float;
 };
 
+// simplest way to compute integers,
+// but can lose precision through repeated operations
 const floatCtx = {
   'identity': 0,
   'commutation': undefinedF((a, b) => a + b),
   'reversion': undefinedF((a, b) => a - b),
-  'shift': undefinedF((value, up) => up ? shift(1, value) : shift(-1, value)),
+  'shift': undefinedF((value, up) => up ? shiftFloat(1, value) : shiftFloat(-1, value)),
   'equation': (a, f) => a === undefined ? f() : a,
 };
 
-const shiftFloat = undefinedF((value) => shift(value.shift, value.float));
+const shiftFloatValue = undefinedF((value) => shiftFloat(value.shift, value.float));
 
 // optimized to preserve integers through transformations
 const shiftFloatCtx = {
@@ -72,20 +74,20 @@ const shiftFloatCtx = {
                   if (acc.shift >= 0) {
                     return {
                       'shift': 0,
-                      'float': shift(acc.shift, acc.float) + shift(v.shift, v.float),
+                      'float': shiftFloat(acc.shift, acc.float) + shiftFloat(v.shift, v.float),
                     };
                   }
 
                   if (v.shift >= -1) {
                     return {
                       'shift': -1,
-                      'float': shift(acc.shift + 1, acc.float) * shift(v.shift + 1, v.float),
+                      'float': shiftFloat(acc.shift + 1, acc.float) * shiftFloat(v.shift + 1, v.float),
                     };
                   }
 
                   return {
                     'shift': -2,
-                    'float': shift(v.shift + 2, v.float) ** shift(acc.shift + 1, acc.float),
+                    'float': shiftFloat(v.shift + 2, v.float) ** shiftFloat(acc.shift + 1, acc.float),
                   };
                 },
             );
@@ -99,7 +101,7 @@ const shiftFloatCtx = {
                   if (acc.shift === 0 && acc.float === 0) {
                     return {
                       'shift': 0,
-                      'float': 0 - shift(v.shift, v.float),
+                      'float': 0 - shiftFloat(v.shift, v.float),
                     };
                   }
 
@@ -110,13 +112,13 @@ const shiftFloatCtx = {
                   if (acc.shift >= 0 && v.shift >= 0) {
                     return {
                       'shift': 0,
-                      'float': shift(acc.shift, acc.float) - shift(v.shift, v.float),
+                      'float': shiftFloat(acc.shift, acc.float) - shiftFloat(v.shift, v.float),
                     };
                   }
 
                   return {
                     'shift': -1,
-                    'float': shift(acc.shift + 1, acc.float) / shift(v.shift + 1, v.float),
+                    'float': shiftFloat(acc.shift + 1, acc.float) / shiftFloat(v.shift + 1, v.float),
                   };
 
                   // exponentiation with a negative number base is broken
@@ -124,7 +126,7 @@ const shiftFloatCtx = {
                   //
                   //   return {
                   //     'shift': -2,
-                  //     'float': shift(v.shift + 2, v.float) ** (1 / shift(acc.shift + 1, acc.float)),
+                  //     'float': shiftFloat(v.shift + 2, v.float) ** (1 / shiftFloat(acc.shift + 1, acc.float)),
                   //   };
                 },
             );
@@ -141,12 +143,31 @@ const shiftFloatCtx = {
   'equation': (a, f) => a === undefined ? f() : a,
 };
 
+// Assumes n is a safe integer
+const shiftString = function(n, string) {
+  let i = 0;
+  if (n >= 0) {
+    while (i < n) {
+      string = '⌈' + string + '⌉';
+      i++;
+    }
+  } else {
+    while (i > n) {
+      string = '⌊' + string + '⌋';
+      i--;
+    }
+  }
+  return string;
+};
+
+// simplest way to represent equations,
+// but is highly verbose
 const stringCtx = {
   'identity': '0',
   'commutation': undefinedF((a, b) => a + ' + ' + b),
   'reversion': undefinedF((a, b) => a + ' - ' + b),
   'shift': undefinedF(
-      (value, up) => up ? '⌈' + value + '⌉' : '⌊' + value + '⌋',
+      (value, up) => up ? shiftString(1, value) : shiftString(-1, value),
   ),
   'equation': (a, f) => {
     const b = f();
@@ -160,6 +181,98 @@ const stringCtx = {
     }
 
     return a + ' = ' + b;
+  },
+};
+
+const shiftStringValue = undefinedF((value) => shiftString(value.shift, value.string));
+
+// more concise way to represent equations
+const shiftStringCtx = {
+  'identity': {
+    'shift': 0,
+    'string': '0',
+  },
+  'commutation': function(...args) {
+    return args
+        .reduce(
+            (acc, v) => {
+              if (v === undefined) {
+                return acc;
+              }
+
+              if (acc === undefined) {
+                // Consider supporting division, or arbitrary hyperoperations
+                return v;
+              }
+
+              if (acc.shift >= 0 && v.shift >= 0) {
+                return {
+                  'shift': 0,
+                  'string': shiftString(acc.shift, acc.string) + ' + ' + shiftString(v.shift, v.string),
+                };
+              }
+
+              return {
+                'shift': -1,
+                'string': shiftString(acc.shift + 1, acc.string) + ' * ' + shiftString(v.shift + 1, v.string),
+              };
+            },
+        );
+  },
+  'reversion': function(...args) {
+    return args
+        .reduce(
+            (acc, v) => {
+              if (v === undefined) {
+                return acc;
+              }
+
+              if (acc === undefined) {
+                // Consider supporting division, or arbitrary hyperoperations
+                return {
+                  'shift': 0,
+                  'string': '0 - ' + shiftString(v.shift, v.string),
+                };
+              }
+
+              if (acc.shift >= 0 && v.shift >= 0) {
+                return {
+                  'shift': 0,
+                  'string': shiftString(acc.shift, acc.string) + ' - ' + shiftString(v.shift, v.string),
+                };
+              }
+
+              return {
+                'shift': -1,
+                'string': shiftString(acc.shift + 1, acc.string) + ' / ' + shiftString(v.shift + 1, v.string),
+              };
+            },
+        );
+  },
+  'shift': undefinedF(
+      (value, up) => (
+        {
+          'shift': up ? value.shift + 1 : value.shift - 1,
+          'string': value.string,
+        }
+      ),
+  ),
+  'equation': (a, f) => {
+    const b = f();
+
+    if (a === undefined) {
+      return b;
+    }
+
+    if (b === undefined) {
+      return a;
+    }
+
+    // Consider shifting at closest level
+    return {
+      'shift': 0,
+      'string': shiftString(a.shift, a.string) + ' = ' + shiftString(b.shift, b.string),
+    };
   },
 };
 
@@ -248,6 +361,7 @@ const z = function(f) {
 };
 
 export {
-  floatCtx, shiftFloat, shiftFloatCtx, stringCtx,
+  floatCtx, shiftFloatValue, shiftFloatCtx,
+  stringCtx, shiftStringValue, shiftStringCtx,
   evaluateF, isEqualF, z, undefinedF,
 };
