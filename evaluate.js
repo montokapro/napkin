@@ -47,7 +47,7 @@ const floatCtx = {
   'equation': (a, f) => a === undefined ? f() : a,
 };
 
-const shiftFloat = (value) => shift(value.shift, value.float);
+const shiftFloat = undefinedF((value) => shift(value.shift, value.float));
 
 // optimized to preserve integers through transformations
 const shiftFloatCtx = {

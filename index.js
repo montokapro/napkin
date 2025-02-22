@@ -3,7 +3,7 @@
 import graphs from './graphs.js';
 
 import {
-  floatCtx, stringCtx, evaluateF, z,
+  shiftFloat, shiftFloatCtx, stringCtx, evaluateF, z,
 } from './evaluate.js';
 
 const thickness = 1 / 16;
@@ -17,13 +17,16 @@ const calculateF = evaluateF({
   unit: (stack) => {
     const node = nodes[stack[0]];
     if ('float' in node) {
-      return node.float;
+      return {
+        'shift': 0,
+        'float': node.float,
+      };
     }
 
     return undefined;
   },
   env: (nodeId) => nodes[nodeId].env,
-  ...floatCtx,
+  ...shiftFloatCtx,
 });
 
 const calculate = z(calculateF);
@@ -91,7 +94,7 @@ const nodeOver = function(e, d, i) {
     equationSelection.property('value', equation);
   }
 
-  const calculation = calculate([d[0]]);
+  const calculation = shiftFloat(calculate([d[0]]));
   if (calculation === undefined) {
     calculationSelection.property('value', '');
   } else {
