@@ -73,7 +73,9 @@ describe('graphs', () => {
 
                 it('shift all', () => {
                   const format = undefinedF(shiftValueToFloat);
-                  assertClose(expected, format(shiftAll([nodeId])));
+                  // Equality isn't guaranteed,
+                  // but it is likely due to integer-preserving optimizations
+                  assert.equal(expected, format(shiftAll([nodeId])));
                 });
               }
             });

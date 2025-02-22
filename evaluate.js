@@ -48,39 +48,85 @@ const floatCtx = {
 
 const shiftValueToFloat = (value) => shift(value.shift, value.float);
 
+// optimized to preserve integers through transformations
 const shiftCtx = {
   'identity': {
     'shift': 0,
     'float': 0,
   },
   'commutation': undefinedF(
-      (a, b) => {
-        if (Math.min(a.shift, b.shift) > 0) {
-          return {
-            'shift': 1,
-            'float': shift(a.shift - 1, a.float) * shift(b.shift - 1, b.float),
-          };
-        } else {
-          return {
-            'shift': 0,
-            'float': shift(a.shift, a.float) + shift(b.shift, b.float),
-          };
-        }
+      function(...args) {
+        return args
+            .sort((a, b) => b.shift - a.shift) // reordering possible due to commutation
+            .reduce(
+                (acc, v) => {
+                  if (acc.shift === 0 && acc.float === 0) {
+                    return v;
+                  }
+
+                  if (v.shift === 0 && v.float === 0) {
+                    return acc;
+                  }
+
+                  if (acc.shift >= 0) {
+                    return {
+                      'shift': 0,
+                      'float': shift(acc.shift, acc.float) + shift(v.shift, v.float),
+                    };
+                  }
+
+                  if (v.shift >= -1) {
+                    return {
+                      'shift': -1,
+                      'float': shift(acc.shift + 1, acc.float) * shift(v.shift + 1, v.float),
+                    };
+                  }
+
+                  return {
+                    'shift': -2,
+                    'float': shift(v.shift + 2, v.float) ** shift(acc.shift + 1, acc.float),
+                  };
+                },
+            );
       },
   ),
   'reversion': undefinedF(
-      (a, b) => {
-        if (Math.min(a.shift, b.shift) > 0) {
-          return {
-            'shift': 1,
-            'float': shift(a.shift - 1, a.float) / shift(b.shift - 1, b.float),
-          };
-        } else {
-          return {
-            'shift': 0,
-            'float': shift(a.shift, a.float) - shift(b.shift, b.float),
-          };
-        }
+      function(...args) {
+        return args
+            .reduce(
+                (acc, v) => {
+                  if (acc.shift === 0 && acc.float === 0) {
+                    return {
+                      'shift': 0,
+                      'float': 0 - shift(v.shift, v.float),
+                    };
+                  }
+
+                  if (v.shift === 0 && v.float === 0) {
+                    return acc;
+                  }
+
+                  if (acc.shift >= 0 && v.shift >= 0) {
+                    return {
+                      'shift': 0,
+                      'float': shift(acc.shift, acc.float) - shift(v.shift, v.float),
+                    };
+                  }
+
+                  return {
+                    'shift': -1,
+                    'float': shift(acc.shift + 1, acc.float) / shift(v.shift + 1, v.float),
+                  };
+
+                  // exponentiation with a negative number base is broken
+                  // in javascript so just multiply instead
+                  //
+                  //   return {
+                  //     'shift': -2,
+                  //     'float': shift(v.shift + 2, v.float) ** (1 / shift(acc.shift + 1, acc.float)),
+                  //   };
+                },
+            );
       },
   ),
   'shift': undefinedF(
