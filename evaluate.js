@@ -196,11 +196,11 @@ const shiftStringCtx = {
     return args
         .reduce(
             (acc, v) => {
-              if (v === undefined) {
+              if (v === undefined || (v.shift === 0 && v.string === '0')) {
                 return acc;
               }
 
-              if (acc === undefined) {
+              if (acc === undefined || (acc.shift === 0 && acc.string === '0')) {
                 // Consider supporting division, or arbitrary hyperoperations
                 return v;
               }
@@ -223,11 +223,11 @@ const shiftStringCtx = {
     return args
         .reduce(
             (acc, v) => {
-              if (v === undefined) {
+              if (v === undefined || (v.shift === 0 && v.string === '0')) {
                 return acc;
               }
 
-              if (acc === undefined) {
+              if (acc === undefined || (acc.shift === 0 && acc.string === '0')) {
                 // Consider supporting division, or arbitrary hyperoperations
                 return {
                   'shift': 0,
