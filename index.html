@@ -6,23 +6,18 @@
   <script src="https://d3js.org/d3.v6.js"></script>
   <script type="module" src="index.js"></script>
 </head>
-<body>
-  <div style="display: inline;">
+<body style="height: 100vh; width: 100vw; margin: 0">
+  <div style="position: absolute; top: 0; left: 0">
     <select style="font-family: Roboto Mono, sans-serif;" id="graphSelect"></select>
-  </div>
 
-  <div style="display: inline;">
     <label for="equation">Equation:</label>
     <input
       type="text"
       id="equation"
       name="equation"
-      width="100%"
       style="font-family: Roboto Mono, sans-serif;"
     ></input>
-  </div>
 
-  <div style="display: inline;">
     <label for="calculation">Calculation:</label>
     <input
       type="text"
@@ -32,5 +27,5 @@
     ></input>
   </div>
 
-  <div id="display"></div>
+  <div id="display" style="display: block; z-index: -1"></div>
 </body>

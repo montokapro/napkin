@@ -148,7 +148,19 @@ const stringCtx = {
   'shift': undefinedF(
       (value, up) => up ? '⌈' + value + '⌉' : '⌊' + value + '⌋',
   ),
-  'equation': undefinedF((a, f) => a + ' = ' + f()),
+  'equation': (a, f) => {
+    const b = f();
+
+    if (a === undefined) {
+      return b;
+    }
+
+    if (b === undefined) {
+      return a;
+    }
+
+    return a + ' = ' + b;
+  },
 };
 
 // Note that any two nodes may have at most one edge between them.

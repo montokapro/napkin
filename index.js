@@ -66,6 +66,7 @@ const svgSelection = displaySelection
     .append('svg')
     .attr('width', '100vw')
     .attr('height', '100vh')
+    .attr('display', 'block')
     .call(zoom)
     .on('dblclick.zoom', null);
 
