@@ -44,6 +44,7 @@ const floatCtx = {
   'commutation': undefinedF((a, b) => a + b),
   'reversion': undefinedF((a, b) => a - b),
   'shift': undefinedF((value, up) => up ? shift(1, value) : shift(-1, value)),
+  'equation': (a, f) => a === undefined ? f() : a
 };
 
 const shiftValueToFloat = (value) => shift(value.shift, value.float);
@@ -137,6 +138,7 @@ const shiftCtx = {
         }
       ),
   ),
+  'equation': (a, f) => a === undefined ? f() : a
 };
 
 const stringCtx = {
@@ -144,8 +146,9 @@ const stringCtx = {
   'commutation': undefinedF((a, b) => a + ' + ' + b),
   'reversion': undefinedF((a, b) => a + ' - ' + b),
   'shift': undefinedF(
-      (value, up) => up ? '⌈' + value + '⌉' : '⌊' + value + '⌋',
+    (value, up) => up ? '⌈' + value + '⌉' : '⌊' + value + '⌋',
   ),
+  'equation': (a, f) => a + ' = ' + f()
 };
 
 // Note that any two nodes may have at most one edge between them.
@@ -184,9 +187,7 @@ const evaluateF = (ctx) => (f) => function(stack) {
             ctx.shift(visit(toId), false),
         );
       } else {
-        if (equal === undefined) {
-          equal = visit(toId);
-        }
+        equal = ctx.equation(equal, () => visit(toId))
       }
     }
   }
@@ -195,11 +196,7 @@ const evaluateF = (ctx) => (f) => function(stack) {
   if (fromOp) {
     result = ctx.shift(ctx.reversion(equal, aggregation), true);
   } else {
-    if (aggregation === undefined) {
-      result = equal;
-    } else {
-      result = aggregation;
-    }
+    result = ctx.equation(aggregation, () => equal)
   }
 
   // console.log(stack);
