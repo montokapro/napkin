@@ -18,6 +18,7 @@ const hyperlogarithmicOperations = [
     },
     transaction: {
       name: 'incrementation',
+      symbol: '⇦',
       operation: (a, b) => {
         return a + Math.exp(b);
       },
@@ -41,6 +42,7 @@ const hyperlogarithmicOperations = [
     },
     transaction: {
       name: 'amplification',
+      symbol: '⇐',
       operation: (a, b) => {
         return a * Math.exp(b);
       },
@@ -64,6 +66,7 @@ const hyperlogarithmicOperations = [
     },
     transaction: {
       name: 'exponentiation',
+      symbol: '←',
       operation: (a, b) => {
         return Math.pow(a, b);
       },
@@ -87,6 +90,7 @@ const hyperlogarithmicOperations = [
     },
     transaction: {
       name: 'elevation',
+      symbol: '↞',
       operation: (a, b) => {
         return Math.pow(Math.log(a), Math.log(b));
       },
