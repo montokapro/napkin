@@ -1,5 +1,5 @@
 import {
-  floatCtx, shiftValueToFloat, shiftCtx,
+  floatCtx, shiftFloat, shiftFloatCtx,
   evaluateF, isEqualF, z, undefinedF,
 } from '../evaluate.js';
 
@@ -52,7 +52,7 @@ describe('graphs', () => {
         const shiftAllF = evaluateF({
           unit: (stack) => undefined,
           env: (nodeId) => graph[nodeId].env,
-          ...shiftCtx,
+          ...shiftFloatCtx,
         });
         const shiftAll = z(shiftAllF);
 
@@ -72,7 +72,7 @@ describe('graphs', () => {
                 });
 
                 it('shift all', () => {
-                  const format = undefinedF(shiftValueToFloat);
+                  const format = undefinedF(shiftFloat);
                   // Equality isn't guaranteed,
                   // but it is likely due to integer-preserving optimizations
                   assert.equal(expected, format(shiftAll([nodeId])));

@@ -3,7 +3,7 @@
 import graphs from './graphs.js';
 
 import {
-  floatCtx, evaluateF, z,
+  floatCtx, stringCtx, evaluateF, z,
 } from './evaluate.js';
 
 const thickness = 1 / 16;
@@ -13,7 +13,7 @@ const edges = {};
 
 let draggedNodeEntry;
 
-const floatEvaluateF = evaluateF({
+const calculateF = evaluateF({
   unit: (stack) => {
     const node = nodes[stack[0]];
     if ('float' in node) {
@@ -26,9 +26,21 @@ const floatEvaluateF = evaluateF({
   ...floatCtx,
 });
 
-const floatEvaluate = z(floatEvaluateF);
+const calculate = z(calculateF);
 
-// const stringVisitF = stringEvaluateF(graph);
+const equateF = evaluateF({
+  unit: (stack) => {
+    const node = nodes[stack[0]];
+    if ('name' in node) {
+      return node.name;
+    }
+
+    return undefined;
+  },
+  env: (nodeId) => nodes[nodeId].env,
+  ...stringCtx,
+});
+const equate = z(equateF);
 
 const equationSelection = d3.select('#equation');
 const calculationSelection = d3.select('#calculation');
@@ -71,13 +83,18 @@ const nodeSelection = imageSelection
     .attr('id', 'nodes');
 
 const nodeOver = function(e, d, i) {
-  equationSelection.property('value', d[1].name);
+  const equation = equate([d[0]]);
+  if (equation === undefined) {
+    equationSelection.property('value', '');
+  } else {
+    equationSelection.property('value', equation);
+  }
 
-  const floatResult = floatEvaluate([d[0]]);
-  if (floatResult === undefined) {
+  const calculation = calculate([d[0]]);
+  if (calculation === undefined) {
     calculationSelection.property('value', '');
   } else {
-    calculationSelection.property('value', floatResult);
+    calculationSelection.property('value', calculation);
   }
 };
 
