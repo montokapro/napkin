@@ -49,7 +49,9 @@ const floatCtx = {
   'equation': (a, f) => a === undefined ? f() : a,
 };
 
-const shiftFloatValue = undefinedF((value) => shiftFloat(value.shift, value.float));
+const shiftFloatTo = (n, value) => shiftFloat(value.shift + n, value.float);
+
+const shiftFloatValue = undefinedF((value) => shiftFloatTo(0, value));
 
 // optimized to preserve integers through transformations
 const shiftFloatCtx = {
@@ -74,20 +76,20 @@ const shiftFloatCtx = {
                   if (acc.shift >= 0) {
                     return {
                       'shift': 0,
-                      'float': shiftFloat(acc.shift, acc.float) + shiftFloat(v.shift, v.float),
+                      'float': shiftFloatTo(0, acc) + shiftFloatTo(0, v),
                     };
                   }
 
                   if (v.shift >= -1) {
                     return {
                       'shift': -1,
-                      'float': shiftFloat(acc.shift + 1, acc.float) * shiftFloat(v.shift + 1, v.float),
+                      'float': shiftFloatTo(1, acc) * shiftFloatTo(1, v),
                     };
                   }
 
                   return {
                     'shift': -2,
-                    'float': shiftFloat(v.shift + 2, v.float) ** shiftFloat(acc.shift + 1, acc.float),
+                    'float': shiftFloatTo(2, v) ** shiftFloatTo(1, acc),
                   };
                 },
             );
@@ -101,7 +103,7 @@ const shiftFloatCtx = {
                   if (acc.shift === 0 && acc.float === 0) {
                     return {
                       'shift': 0,
-                      'float': 0 - shiftFloat(v.shift, v.float),
+                      'float': 0 - shiftFloatTo(0, v),
                     };
                   }
 
@@ -112,13 +114,13 @@ const shiftFloatCtx = {
                   if (acc.shift >= 0 && v.shift >= 0) {
                     return {
                       'shift': 0,
-                      'float': shiftFloat(acc.shift, acc.float) - shiftFloat(v.shift, v.float),
+                      'float': shiftFloatTo(0, acc) - shiftFloatTo(0, v),
                     };
                   }
 
                   return {
                     'shift': -1,
-                    'float': shiftFloat(acc.shift + 1, acc.float) / shiftFloat(v.shift + 1, v.float),
+                    'float': shiftFloatTo(1, acc) / shiftFloatTo(1, v),
                   };
 
                   // exponentiation with a negative number base is broken
@@ -126,7 +128,7 @@ const shiftFloatCtx = {
                   //
                   //   return {
                   //     'shift': -2,
-                  //     'float': shiftFloat(v.shift + 2, v.float) ** (1 / shiftFloat(acc.shift + 1, acc.float)),
+                  //     'float': shiftFloatTo(2, v) ** (1 / shiftFloatTo(1, acc)),
                   //   };
                 },
             );
@@ -184,7 +186,9 @@ const stringCtx = {
   },
 };
 
-const shiftStringValue = undefinedF((value) => shiftString(value.shift, value.string));
+const shiftStringTo = (n, value) => shiftString(value.shift + n, value.string);
+
+const shiftStringValue = undefinedF((value) => shiftStringTo(0, value));
 
 // more concise way to represent equations
 const shiftStringCtx = {
@@ -208,13 +212,13 @@ const shiftStringCtx = {
               if (acc.shift >= 0 && v.shift >= 0) {
                 return {
                   'shift': 0,
-                  'string': shiftString(acc.shift, acc.string) + ' + ' + shiftString(v.shift, v.string),
+                  'string': shiftStringTo(0, acc) + ' + ' + shiftStringTo(0, v),
                 };
               }
 
               return {
                 'shift': -1,
-                'string': shiftString(acc.shift + 1, acc.string) + ' * ' + shiftString(v.shift + 1, v.string),
+                'string': shiftStringTo(1, acc) + ' * ' + shiftStringTo(1, v),
               };
             },
         );
@@ -231,20 +235,20 @@ const shiftStringCtx = {
                 // Consider supporting division, or arbitrary hyperoperations
                 return {
                   'shift': 0,
-                  'string': '0 - ' + shiftString(v.shift, v.string),
+                  'string': '0 - ' + shiftStringTo(0, v),
                 };
               }
 
               if (acc.shift >= 0 && v.shift >= 0) {
                 return {
                   'shift': 0,
-                  'string': shiftString(acc.shift, acc.string) + ' - ' + shiftString(v.shift, v.string),
+                  'string': shiftStringTo(0, acc) + ' - ' + shiftStringTo(0, v),
                 };
               }
 
               return {
                 'shift': -1,
-                'string': shiftString(acc.shift + 1, acc.string) + ' / ' + shiftString(v.shift + 1, v.string),
+                'string': shiftStringTo(1, acc) + ' / ' + shiftStringTo(1, v),
               };
             },
         );
