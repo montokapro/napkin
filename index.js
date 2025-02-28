@@ -243,7 +243,7 @@ const nodeDragEnded = function(event, d) {
 const updateNodeCircleFill = function(circleSelection) {
   circleSelection
       .style('fill', function(d) {
-        if (d.selected) {
+        if (d[1].selected) {
           return '#FFC3BF';
         } else {
           return '#FF928B';
@@ -253,13 +253,40 @@ const updateNodeCircleFill = function(circleSelection) {
   return circleSelection;
 };
 
-// const enterNodeCircle = function(groupSelection) {
-//   return groupSelection.append('circle')
-//       .attr('r', thickness * 2)
-//       .style('stroke-width', 0);
-// }
+const updateNodeCircleVisibility = function(circleSelection) {
+  circleSelection
+      .style('visibility', function(d) {
+        if (d[1].selected) {
+          return null;
+        } else {
+          return 'hidden';
+        }
+      });
 
-// const updateNodeCircle = updateNodeCircleFill
+  return circleSelection;
+};
+
+const innerOver = function(e, d, i) {
+  d[1].selected = true;
+  updateNodeCircleFill(d3.select(this));
+};
+
+const innerOut = function(e, d, i) {
+  delete d[1].selected;
+  updateNodeCircleFill(d3.select(this));
+};
+
+const outerOver = function(e, d, i) {
+  d[1].selected = true;
+  updateNodeCircleFill(d3.select(this));
+  updateNodeCircleVisibility(d3.select(this));
+};
+
+const outerOut = function(e, d, i) {
+  delete d[1].selected;
+  updateNodeCircleFill(d3.select(this));
+  updateNodeCircleVisibility(d3.select(this));
+};
 
 const nodePrompt = function(event, d) {
   const value = prompt('Enter a name or value:');
@@ -300,11 +327,22 @@ const enterNode = function(selection) {
           .on('end', nodeDragEnded),
   );
 
-  const circleSelection = groupSelection.append('circle')
-      .attr('r', thickness * 2)
-      .style('stroke-width', 0);
+  const outerSelection = groupSelection.append('circle')
+      .attr('r', thickness * 4)
+      .style('stroke-width', 0)
+      .on('mouseover', outerOver)
+      .on('mouseout', outerOut);
 
-  updateNodeCircleFill(circleSelection);
+  updateNodeCircleFill(outerSelection);
+  updateNodeCircleVisibility(outerSelection);
+
+  const innerSelection = groupSelection.append('circle')
+      .attr('r', thickness * 2)
+      .style('stroke-width', 0)
+      .on('mouseover', innerOver)
+      .on('mouseout', innerOut);
+
+  updateNodeCircleFill(innerSelection);
 
   groupSelection
       .style('font-family', 'Roboto Mono, sans-serif')
@@ -317,13 +355,29 @@ const enterNode = function(selection) {
 };
 
 const updateNode = function(groupSelection) {
-  // TODO: Why does the circle disappear without this?
-  const circleSelection = groupSelection.append('circle')
-      .attr('r', thickness * 2)
-      .style('stroke-width', 0);
-  updateNodeCircleFill(circleSelection);
+  //
+  // TODO: Why does the circle disappear without these?
+  //
+  const outerSelection = groupSelection.append('circle')
+      .attr('r', thickness * 4)
+      .style('stroke-width', 0)
+      .on('mouseover', outerOver)
+      .on('mouseout', outerOut);
 
-  // updateNodeCircleFill(groupSelection.select('circle'));
+  updateNodeCircleFill(outerSelection);
+  updateNodeCircleVisibility(outerSelection);
+
+  const innerSelection = groupSelection.append('circle')
+      .attr('r', thickness * 2)
+      .style('stroke-width', 0)
+      .on('mouseover', innerOver)
+      .on('mouseout', innerOut);
+
+  updateNodeCircleFill(innerSelection);
+  //
+  // TODO: Replace with updates
+  //
+
   updateNodePoint(groupSelection);
 
   return groupSelection;
