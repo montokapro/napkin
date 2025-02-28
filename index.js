@@ -118,51 +118,39 @@ const entryKey = (entry) => '#UUID-' + entry[0];
 const updateEdgePoints = function(lineSelection) {
   // Consider functions that return a constant distance from endpoints
 
-  const fromX = (d) => {
+  return lineSelection.each(function(d) {
     const from = d[1][0];
     const to = d[1][1];
+
+    const deltaX = to.node.point[0] - from.node.point[0];
+    const deltaY = to.node.point[1] - from.node.point[1];
+
+    let fromX;
+    let fromY;
     if (from.op) {
-      return from.node.point[0] + ((to.node.point[0] - from.node.point[0]) / 4);
+      fromX = from.node.point[0] + (deltaX / 4);
+      fromY = from.node.point[1] + (deltaY / 4);
     } else {
-      return from.node.point[0];
+      fromX = from.node.point[0];
+      fromY = from.node.point[1];
     }
-  };
 
-  const fromY = (d) => {
-    const from = d[1][0];
-    const to = d[1][1];
-    if (from.op) {
-      return from.node.point[1] + ((to.node.point[1] - from.node.point[1]) / 4);
-    } else {
-      return from.node.point[1];
-    }
-  };
-
-  const toX = (d) => {
-    const from = d[1][0];
-    const to = d[1][1];
+    let toX;
+    let toY;
     if (to.op) {
-      return to.node.point[0] + ((from.node.point[0] - to.node.point[0]) / 4);
+      toX = to.node.point[0] + (-deltaX / 4);
+      toY = to.node.point[1] + (-deltaY / 4);
     } else {
-      return to.node.point[0];
-    }
-  };
+      toX = to.node.point[0];
+      toY = to.node.point[1];
+    };
 
-  const toY = (d) => {
-    const from = d[1][0];
-    const to = d[1][1];
-    if (to.op) {
-      return to.node.point[1] + ((from.node.point[1] - to.node.point[1]) / 4);
-    } else {
-      return to.node.point[1];
-    }
-  };
-
-  return lineSelection
-      .attr('x1', fromX)
-      .attr('y1', fromY)
-      .attr('x2', toX)
-      .attr('y2', toY);
+    return d3.select(this)
+        .attr('x1', fromX)
+        .attr('y1', fromY)
+        .attr('x2', toX)
+        .attr('y2', toY);
+  });
 };
 
 const enterEdge = function(selection) {
