@@ -7,24 +7,30 @@
   <script type="module" src="index.js"></script>
 </head>
 <body style="height: 100vh; width: 100vw; margin: 0">
-  <div style="position: absolute; top: 0; left: 0">
-    <select style="font-family: Roboto Mono, sans-serif;" id="graphSelect"></select>
+  <div style="position: absolute; top: 0; left: 0; float: left;">
+    <div>
+      <select style="font-family: Roboto Mono, sans-serif;" id="graphSelect"></select>
+    </div>
 
-    <label for="equation">Equation:</label>
-    <input
-      type="text"
-      id="equation"
-      name="equation"
-      style="font-family: Roboto Mono, sans-serif;"
-    ></input>
+    <div>
+      <input
+        type="text"
+        id="equation"
+        name="equation"
+        placeholder="equation"
+        style="font-family: Roboto Mono, sans-serif;"
+      ></input>
+    </div>
 
-    <label for="calculation">Calculation:</label>
-    <input
-      type="text"
-      id="calculation"
-      name="calculation"
-      style="font-family: Roboto Mono, sans-serif;"
-    ></input>
+    <div>
+      <input
+        type="text"
+        id="calculation"
+        name="calculation"
+        placeholder="calculation"
+        style="font-family: Roboto Mono, sans-serif;"
+      ></input>
+    </div>
   </div>
 
   <div id="display" style="display: block; z-index: -1"></div>
