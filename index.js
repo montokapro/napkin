@@ -80,7 +80,7 @@ const createNode = function(e) {
   // This calls methods that are not defined yet
   // Consider moving later in file
   nodeSelection
-      .selectAll('*')
+      .selectAll('#UUID-' + nodeId)
       .data(Object.entries(nodes), entryKey)
       .join(enterNode, updateNode);
 };
@@ -261,7 +261,7 @@ const nodeDragEnded = function(event, d) {
 const updateNodeCircleFill = function(circleSelection) {
   circleSelection
       .style('fill', function(d) {
-        if (d[1].selected) {
+        if ('selected' in d[1]) {
           return '#FFC3BF';
         } else {
           return '#FF928B';
@@ -274,7 +274,7 @@ const updateNodeCircleFill = function(circleSelection) {
 const updateNodeCircleVisibility = function(circleSelection) {
   circleSelection
       .style('visibility', function(d) {
-        if (d[1].selected) {
+        if ('selected' in d[1]) {
           return null;
         } else {
           return 'hidden';
@@ -285,7 +285,7 @@ const updateNodeCircleVisibility = function(circleSelection) {
 };
 
 const innerOver = function(e, d, i) {
-  d[1].selected = true;
+  d[1].selected = false;
   updateNodeCircleFill(d3.select(this));
 };
 
