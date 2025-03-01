@@ -1,3 +1,6 @@
+// d3.js style does not follow jslint rules
+/* eslint-disable no-invalid-this */
+
 'use strict';
 
 import graphs from './graphs.js';
@@ -125,25 +128,39 @@ const updateEdgePoints = function(lineSelection) {
     const deltaX = to.node.point[0] - from.node.point[0];
     const deltaY = to.node.point[1] - from.node.point[1];
 
-    let fromX;
-    let fromY;
-    if (from.op) {
-      fromX = from.node.point[0] + (deltaX / 4);
-      fromY = from.node.point[1] + (deltaY / 4);
+    // Consider case where delta < radius * 2
+    let radiusX = 1 / 4;
+    let radiusY = 1 / 4;
+    if (deltaX === 0) {
+      radiusX = 0;
+    } else if (deltaY === 0) {
+      radiusY = 0;
     } else {
-      fromX = from.node.point[0];
-      fromY = from.node.point[1];
+      radiusX = radiusX / Math.sqrt((deltaY / deltaX) ** 2 + 1);
+      radiusY = radiusY / Math.sqrt((deltaX / deltaY) ** 2 + 1);
     }
 
-    let toX;
-    let toY;
+    if (deltaX < 0) {
+      radiusX = -radiusX;
+    }
+
+    if (deltaY < 0) {
+      radiusY = -radiusY;
+    }
+
+    let fromX = from.node.point[0];
+    let fromY = from.node.point[1];
+    if (from.op) {
+      fromX = fromX + radiusX;
+      fromY = fromY + radiusY;
+    }
+
+    let toX = to.node.point[0];
+    let toY = to.node.point[1];
     if (to.op) {
-      toX = to.node.point[0] + (-deltaX / 4);
-      toY = to.node.point[1] + (-deltaY / 4);
-    } else {
-      toX = to.node.point[0];
-      toY = to.node.point[1];
-    };
+      toX = toX - radiusX;
+      toY = toY - radiusY;
+    }
 
     return d3.select(this)
         .attr('x1', fromX)
