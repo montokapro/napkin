@@ -57,13 +57,6 @@ const equationSelection = d3.select('#equation');
 const calculationSelection = d3.select('#calculation');
 const displaySelection = d3.select('#display');
 
-// const graphClick = function() {
-//   Object.entries(graph).forEach((e) => delete e[1].selected);
-
-//   updateNodeFill(nodeSelection.selectAll('.node').select('circle'));
-//   updateEdgeStroke(edgeSelection.selectAll('.edge'));
-// };
-
 const handleZoom = function(e) {
   d3.select('#image')
       .attr('transform', e.transform);
@@ -72,6 +65,26 @@ const handleZoom = function(e) {
 const zoom = d3.zoom()
     .on('zoom', handleZoom);
 
+const createNode = function(e) {
+  const transform = d3.zoomTransform(this);
+  const point = transform.invert(d3.pointer(e, this));
+
+  const nodeId = crypto.randomUUID();
+
+  nodes[nodeId] = {
+    point: point,
+    env: {
+    },
+  };
+
+  // This calls methods that are not defined yet
+  // Consider moving later in file
+  nodeSelection
+      .selectAll('*')
+      .data(Object.entries(nodes), entryKey)
+      .join(enterNode, updateNode);
+};
+
 // https://www.d3indepth.com/zoom-and-pan/
 const svgSelection = displaySelection
     .append('svg')
@@ -79,7 +92,7 @@ const svgSelection = displaySelection
     .attr('height', '100vh')
     .attr('display', 'block')
     .call(zoom)
-    .on('dblclick.zoom', null);
+    .on('dblclick.zoom', createNode);
 
 const imageSelection = svgSelection
     .append('g')
@@ -312,7 +325,6 @@ const nodePrompt = function(event, d) {
     }
   }
 };
-
 
 const enterNode = function(selection) {
   const groupSelection = selection.append('g')
