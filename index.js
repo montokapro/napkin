@@ -16,7 +16,8 @@ const thickness = 1 / 16;
 const nodes = {};
 const edges = {};
 
-let draggedNodeEntry;
+let hovered;
+let dragged;
 
 const calculateF = evaluateF({
   unit: (stack) => {
@@ -70,18 +71,19 @@ const createNode = function(e) {
   const point = transform.invert(d3.pointer(e, this));
 
   const nodeId = crypto.randomUUID();
-
-  nodes[nodeId] = {
+  const node = {
     point: point,
     env: {
     },
   };
 
+  nodes[nodeId] = node;
+
   // This calls methods that are not defined yet
   // Consider moving later in file
   nodeSelection
-      .selectAll('#UUID-' + nodeId)
-      .data(Object.entries(nodes), entryKey)
+      .selectAll('#UUID_' + nodeId)
+      .data([[nodeId, node]], entryKey)
       .join(enterNode, updateNode);
 };
 
@@ -128,8 +130,8 @@ const nodeOut = function(e, d, i) {
   equationSelection.property('value', '');
 };
 
-const entryId = (entry) => 'UUID-' + entry[0];
-const entryKey = (entry) => '#UUID-' + entry[0];
+const entryId = (entry) => 'UUID_' + entry[0];
+const entryKey = (entry) => '#UUID_' + entry[0];
 
 const updateEdgePoints = function(lineSelection) {
   // Consider functions that return a constant distance from endpoints
@@ -219,12 +221,12 @@ const modifyNodePoint = function(event, d) {
 
   node.point = [event.x, event.y];
 
-  updateNodePoint(nodeSelection.selectAll('#UUID-' + nodeId));
+  updateNodePoint(nodeSelection.selectAll('#UUID_' + nodeId));
 
   const edgeIds = [];
   for (const toId of Object.keys(node.env)) {
     // TODO: vulnerable to injection
-    const edgeId = '#UUID-' + [nodeId, toId].sort().join('-');
+    const edgeId = '#UUID_' + [nodeId, toId].sort().join('_');
     edgeIds.unshift(edgeId);
   }
 
@@ -233,29 +235,59 @@ const modifyNodePoint = function(event, d) {
   }
 };
 
-// https://stackoverflow.com/questions/28102089/simple-graph-of-nodes-and-links-without-using-force-layout
 const nodeDragStarted = function(event, d) {
-  draggedNodeEntry = d;
+  if (hovered === undefined) {
+    console.warn(console.trace());
+    return;
+  }
 
-  nodeSelection
-      .selectAll('#UUID-' + draggedNodeEntry[0])
-      .attr('cursor', 'grabbing');
+  dragged = hovered;
 };
 
 const nodeDragged = function(event, d) {
-  if (draggedNodeEntry === undefined) {
-    modifyNodePoint(event, d);
-  } else {
-    modifyNodePoint(event, draggedNodeEntry);
-  }
+  // TODO: draw line
 };
 
 const nodeDragEnded = function(event, d) {
-  nodeSelection
-      .selectAll('#UUID-' + draggedNodeEntry[0])
-      .attr('cursor', 'grab');
+  if (dragged === undefined) {
+    console.warn(console.trace());
+    return;
+  }
 
-  draggedNodeEntry = undefined;
+  if (hovered === undefined) {
+    modifyNodePoint(event, [dragged[0], nodes[dragged[0]]]);
+    return;
+  }
+
+  if (hovered[0] === dragged[0]) {
+    if (dragged[0] === hovered[0] && dragged[1] === hovered[1]) {
+      dragged = undefined;
+    }
+
+    return;
+  }
+
+  const modified = [
+    hovered,
+    dragged,
+  ].sort((a, b) => a[0].localeCompare(b[0]));
+
+  const edgeId = modified.map((a) => a[0]).join('_');
+  const edge = modified.map((a) => ({node: nodes[a[0]], op: a[1]}));
+
+  nodes[hovered[0]].env[dragged[0]] = hovered[1];
+  nodes[dragged[0]].env[hovered[0]] = dragged[1];
+
+  edges[edgeId] = edge;
+
+  edgeSelection
+      .selectAll('#UUID_' + edgeId)
+      .data([[edgeId, edge]], entryKey)
+      .join(enterEdge, updateEdge);
+
+  if (dragged[0] === hovered[0] && dragged[1] === hovered[1]) {
+    dragged = undefined;
+  }
 };
 
 const updateNodeCircleFill = function(circleSelection) {
@@ -285,29 +317,43 @@ const updateNodeCircleVisibility = function(circleSelection) {
 };
 
 const innerOver = function(e, d, i) {
+  hovered = [d[0], false];
+
   d[1].selected = false;
   updateNodeCircleFill(d3.select(this));
 };
 
 const innerOut = function(e, d, i) {
+  // if (hovered !== undefined && hovered[0] === d[0] && hovered[0] === false) {
+  hovered = undefined;
+  // }
+
   delete d[1].selected;
   updateNodeCircleFill(d3.select(this));
 };
 
 const outerOver = function(e, d, i) {
+  hovered = [d[0], true];
+
   d[1].selected = true;
   updateNodeCircleFill(d3.select(this));
   updateNodeCircleVisibility(d3.select(this));
 };
 
 const outerOut = function(e, d, i) {
+  // if (hovered !== undefined && hovered[0] === d[0] && hovered[0] === true) {
+  hovered = undefined;
+  // }
+
   delete d[1].selected;
   updateNodeCircleFill(d3.select(this));
   updateNodeCircleVisibility(d3.select(this));
 };
 
 const nodePrompt = function(event, d) {
-  const value = prompt('Enter a name or value:');
+  event.stopPropagation();
+
+  const value = prompt('Enter a name or value_');
 
   if (value === null) {
     return;
@@ -403,6 +449,10 @@ const updateNode = function(groupSelection) {
 const refresh = function() {
   equationSelection.property('value', '');
   calculationSelection.property('value', '');
+  // draggedNodeEntry = undefined
+  // hoveredNodeEntry = undefined
+  dragged = undefined;
+  hovered = undefined;
 
   edgeSelection
       .selectAll('*')
@@ -432,7 +482,7 @@ const selectGraph = function(categoryId, graphId) {
         const nodeIds = [fromId, toId];
 
         // TODO: vulnerable to injection
-        const edgeId = nodeIds.join('-');
+        const edgeId = nodeIds.join('_');
 
         const to = nodes[toId];
         const toOp = to.env[fromId];
@@ -518,6 +568,11 @@ const fitZoom = () => {
 
 graphSelection
     .on('change', function() {
+      console.log({
+        nodes: nodes,
+        edges: edges,
+      });
+
       const selectedOption = d3.select(this).property('value');
 
       const [categoryId, graphId] = JSON.parse(selectedOption);
