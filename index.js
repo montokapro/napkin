@@ -54,9 +54,30 @@ const equateF = evaluateF({
 });
 const equate = z(equateF);
 
-const equationSelection = d3.select('#equation');
-const calculationSelection = d3.select('#calculation');
 const displaySelection = d3.select('#display');
+
+const setParagraphSelection = (id, defaultText) => {
+  const selection = d3.select(id);
+
+  const f = (text) => {
+    if (text === undefined) {
+      return selection
+          .style('font-style', 'italic')
+          .text(defaultText);
+    } else {
+      return selection
+          .style('font-style', null)
+          .text(text);
+    }
+  };
+
+  f(selection, null);
+
+  return f;
+};
+
+const setEquation = setParagraphSelection('#equation', 'equation');
+const setCalculation = setParagraphSelection('#calculation', 'calculation');
 
 const handleZoom = function(e) {
   d3.select('#image')
@@ -111,23 +132,15 @@ const nodeSelection = imageSelection
 
 const nodeOver = function(e, d, i) {
   const equation = shiftStringValue(equate([d[0]]));
-  if (equation === undefined) {
-    equationSelection.property('value', '');
-  } else {
-    equationSelection.property('value', equation);
-  }
+  setEquation(equation);
 
   const calculation = shiftFloatValue(calculate([d[0]]));
-  if (calculation === undefined) {
-    calculationSelection.property('value', '');
-  } else {
-    calculationSelection.property('value', calculation);
-  }
+  setCalculation(calculation);
 };
 
 const nodeOut = function(e, d, i) {
-  calculationSelection.property('value', '');
-  equationSelection.property('value', '');
+  setCalculation(undefined);
+  setEquation(undefined);
 };
 
 const entryId = (entry) => 'UUID_' + entry[0];
@@ -447,10 +460,8 @@ const updateNode = function(groupSelection) {
 };
 
 const refresh = function() {
-  equationSelection.property('value', '');
-  calculationSelection.property('value', '');
-  // draggedNodeEntry = undefined
-  // hoveredNodeEntry = undefined
+  setEquation(undefined);
+  setCalculation(undefined);
   dragged = undefined;
   hovered = undefined;
 
