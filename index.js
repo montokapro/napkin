@@ -567,12 +567,13 @@ const fitZoom = () => {
 };
 
 graphSelection
-    .on('change', function() {
+    .on('focus', function() {
       console.log({
         nodes: nodes,
         edges: edges,
       });
-
+    })
+    .on('change', function() {
       const selectedOption = d3.select(this).property('value');
 
       const [categoryId, graphId] = JSON.parse(selectedOption);
