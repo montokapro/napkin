@@ -198,6 +198,27 @@ const updateEdgePoints = function(lineSelection) {
   });
 };
 
+const edgePrompt = function(event, d) {
+  event.stopPropagation();
+
+  const value = confirm('Delete?');
+
+  if (value) {
+    const edgeId = d[0];
+    const [aId, bId] = edgeId.split('_');
+    const [a, b] = d[1];
+
+    delete a.node.env[bId];
+    delete b.node.env[aId];
+    delete edges[edgeId];
+
+    edgeSelection
+        .selectAll('#UUID_' + edgeId)
+        .data([], entryKey)
+        .join(enterEdge, updateEdge);
+  }
+};
+
 const enterEdge = function(selection) {
   const lineSelection = selection.append('line');
 
@@ -207,7 +228,8 @@ const enterEdge = function(selection) {
       .attr('pointer-events', 'stroke')
       .attr('stroke-linecap', 'round')
       .attr('stroke-width', thickness)
-      .style('stroke', '#FF928B');
+      .style('stroke', '#FF928B')
+      .on('dblclick', edgePrompt);
 
   updateEdgePoints(lineSelection);
 
