@@ -186,14 +186,25 @@ const stringCtx = {
   },
 };
 
-const shiftStringTo = (n, value) => shiftString(value.shift + n, value.string);
+const shiftStringTo = (shift, precedence, value) => {
+  shift = value.shift + shift;
 
-const shiftStringValue = undefinedF((value) => shiftStringTo(0, value));
+  if (precedence < value.precedence && shift === 0) {
+    return '(' + value.string + ')';
+  }
+
+  return shiftString(shift, value.string);
+};
+
+const shiftStringValue = undefinedF((value) => {
+  return shiftStringTo(0, Infinity, value);
+});
 
 // more concise way to represent equations
 const shiftStringCtx = {
   'identity': {
     'shift': 0,
+    'precedence': Infinity,
     'string': '0',
   },
   'commutation': function(...args) {
@@ -209,20 +220,22 @@ const shiftStringCtx = {
               }
 
               if (acc.shift === 0 && acc.string === '0') {
-                // Consider supporting division, or arbitrary hyperoperations
+                // Consider supporting addition, or arbitrary hyperoperations
                 return v;
               }
 
               if (acc.shift >= 0 && v.shift >= 0) {
                 return {
                   'shift': 0,
-                  'string': shiftStringTo(0, acc) + ' + ' + shiftStringTo(0, v),
+                  'precedence': 0,
+                  'string': shiftStringTo(0, 0, acc) + ' + ' + shiftStringTo(0, 0, v),
                 };
               }
 
               return {
                 'shift': -1,
-                'string': shiftStringTo(1, acc) + ' * ' + shiftStringTo(1, v),
+                'precedence': -1,
+                'string': shiftStringTo(1, -1, acc) + ' * ' + shiftStringTo(1, -1, v),
               };
             },
         );
@@ -243,20 +256,23 @@ const shiftStringCtx = {
                 // Consider supporting division, or arbitrary hyperoperations
                 return {
                   'shift': 0,
-                  'string': '0 - ' + shiftStringTo(0, v),
+                  'precedence': 0,
+                  'string': '0 - ' + shiftStringTo(0, 0, v),
                 };
               }
 
               if (acc.shift >= 0 && v.shift >= 0) {
                 return {
                   'shift': 0,
-                  'string': shiftStringTo(0, acc) + ' - ' + shiftStringTo(0, v),
+                  'precedence': 0,
+                  'string': shiftStringTo(0, 0, acc) + ' - ' + shiftStringTo(0, 0, v),
                 };
               }
 
               return {
                 'shift': -1,
-                'string': shiftStringTo(1, acc) + ' / ' + shiftStringTo(1, v),
+                'precedence': -1,
+                'string': shiftStringTo(1, -1, acc) + ' / ' + shiftStringTo(1, -1, v),
               };
             },
         );
@@ -265,6 +281,7 @@ const shiftStringCtx = {
       (value, up) => (
         {
           'shift': up ? value.shift + 1 : value.shift - 1,
+          'precedence': value.precedence,
           'string': value.string,
         }
       ),
@@ -283,7 +300,8 @@ const shiftStringCtx = {
     // Consider shifting at closest level
     return {
       'shift': 0,
-      'string': shiftStringTo(0, a) + ' = ' + shiftStringTo(0, b),
+      'precedence': Infinity,
+      'string': shiftStringTo(0, Infinity, a) + ' = ' + shiftStringTo(0, Infinity, b),
     };
   },
 };
