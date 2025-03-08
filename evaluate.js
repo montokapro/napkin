@@ -201,6 +201,8 @@ const shiftStringValue = undefinedF((value) => {
 });
 
 // more concise way to represent equations
+//
+// TODO: exponential precedence likely wrong
 const shiftStringCtx = {
   'identity': {
     'shift': 0,
@@ -232,10 +234,18 @@ const shiftStringCtx = {
                 };
               }
 
+              if (v.shift >= -1) {
+                return {
+                  'shift': -1,
+                  'precedence': -1,
+                  'string': shiftStringTo(1, -1, acc) + ' * ' + shiftStringTo(1, -1, v),
+                };
+              }
+
               return {
-                'shift': -1,
-                'precedence': -1,
-                'string': shiftStringTo(1, -1, acc) + ' * ' + shiftStringTo(1, -1, v),
+                'shift': -2,
+                'precedence': -2,
+                'string': shiftStringTo(2, -1.5, v) + ' ← ' + shiftStringTo(1, -2, acc),
               };
             },
         );
@@ -269,10 +279,26 @@ const shiftStringCtx = {
                 };
               }
 
+              if (acc.shift >= -1 && v.shift >= -1) {
+                return {
+                  'shift': -1,
+                  'precedence': -1,
+                  'string': shiftStringTo(1, -1, acc) + ' / ' + shiftStringTo(1, -0.5, v),
+                };
+              }
+
+              if (v.shift === -1) {
+                return {
+                  'shift': -2,
+                  'precedence': -2,
+                  'string': shiftStringTo(1, -1.5, v) + ' ↗ ' + shiftStringTo(2, -2, acc),
+                };
+              }
+
               return {
                 'shift': -1,
-                'precedence': -1,
-                'string': shiftStringTo(1, -1, acc) + ' / ' + shiftStringTo(1, -0.5, v),
+                'precedence': -2,
+                'string': shiftStringTo(2, -1.5, v) + ' ↙ ' + shiftStringTo(2, -2, acc),
               };
             },
         );
