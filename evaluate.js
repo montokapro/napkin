@@ -265,14 +265,14 @@ const shiftStringCtx = {
                 return {
                   'shift': 0,
                   'precedence': 0,
-                  'string': shiftStringTo(0, 0, acc) + ' - ' + shiftStringTo(0, 0, v),
+                  'string': shiftStringTo(0, 0, acc) + ' - ' + shiftStringTo(0, -0.5, v),
                 };
               }
 
               return {
                 'shift': -1,
                 'precedence': -1,
-                'string': shiftStringTo(1, -1, acc) + ' / ' + shiftStringTo(1, -1, v),
+                'string': shiftStringTo(1, -1, acc) + ' / ' + shiftStringTo(1, -0.5, v),
               };
             },
         );
