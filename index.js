@@ -289,16 +289,9 @@ const nodeDragEnded = function(event, d) {
     return;
   }
 
-  if (hovered === undefined) {
+  if (hovered === undefined || hovered[0] === dragged[0]) {
     modifyNodePoint(event, [dragged[0], nodes[dragged[0]]]);
-    return;
-  }
-
-  if (hovered[0] === dragged[0]) {
-    if (dragged[0] === hovered[0] && dragged[1] === hovered[1]) {
-      dragged = undefined;
-    }
-
+    dragged = undefined;
     return;
   }
 
@@ -320,9 +313,7 @@ const nodeDragEnded = function(event, d) {
       .data([[edgeId, edge]], entryKey)
       .join(enterEdge, updateEdge);
 
-  if (dragged[0] === hovered[0] && dragged[1] === hovered[1]) {
-    dragged = undefined;
-  }
+  dragged = undefined;
 };
 
 const updateNodeCircleFill = function(circleSelection) {
@@ -359,9 +350,7 @@ const innerOver = function(e, d, i) {
 };
 
 const innerOut = function(e, d, i) {
-  // if (hovered !== undefined && hovered[0] === d[0] && hovered[0] === false) {
   hovered = undefined;
-  // }
 
   delete d[1].selected;
   updateNodeCircleFill(d3.select(this));
@@ -376,9 +365,7 @@ const outerOver = function(e, d, i) {
 };
 
 const outerOut = function(e, d, i) {
-  // if (hovered !== undefined && hovered[0] === d[0] && hovered[0] === true) {
   hovered = undefined;
-  // }
 
   delete d[1].selected;
   updateNodeCircleFill(d3.select(this));
