@@ -319,10 +319,18 @@ const nodeDragEnded = function(event, d) {
 const updateNodeCircleFill = function(circleSelection) {
   circleSelection
       .style('fill', function(d) {
-        if ('selected' in d[1]) {
-          return '#FFC3BF';
+        if ('name' in d[1] || 'float' in d[1]) {
+          if ('selected' in d[1]) {
+            return '#DFFFD1';
+          } else {
+            return '#CDEAC0';
+          }
         } else {
-          return '#FF928B';
+          if ('selected' in d[1]) {
+            return '#FFC3BF';
+          } else {
+            return '#FF928B';
+          }
         }
       });
 
