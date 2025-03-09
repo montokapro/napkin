@@ -16,6 +16,8 @@ const thickness = 1 / 16;
 const nodes = {};
 const edges = {};
 
+let grid = false;
+
 let hovered;
 let dragged;
 
@@ -55,6 +57,13 @@ const equateF = evaluateF({
 const equate = z(equateF);
 
 const displaySelection = d3.select('#display');
+
+const gridCheckboxSelection = d3.select('#gridCheckbox');
+
+gridCheckboxSelection
+    .on('click', () => {
+      grid = gridCheckboxSelection.property('checked');
+    });
 
 const setParagraphSelection = (id, defaultText) => {
   const selection = d3.select(id);
@@ -255,6 +264,10 @@ const modifyNodePoint = function(event, d) {
   const [nodeId, node] = d;
 
   node.point = [event.x, event.y];
+
+  if (grid) {
+    node.point = node.point.map((a) => Math.round(a));
+  }
 
   updateNodePoint(nodeSelection.selectAll('#UUID_' + nodeId));
 
