@@ -98,7 +98,11 @@ const zoom = d3.zoom()
 
 const createNode = function(e) {
   const transform = d3.zoomTransform(this);
-  const point = transform.invert(d3.pointer(e, this));
+
+  let point = transform.invert(d3.pointer(e, this));
+  if (grid) {
+    point = point.map((a) => Math.round(a));
+  }
 
   const nodeId = crypto.randomUUID();
   const node = {
