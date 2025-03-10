@@ -410,10 +410,10 @@ const nodePrompt = function(event, d) {
     delete d[1].name;
     delete d[1].float;
   } else {
+    d[1].name = value;
+
     const float = parseFloat(value);
-    if (isNaN(float)) {
-      d[1].name = value;
-    } else {
+    if (!isNaN(float)) {
       d[1].float = float;
     }
   }

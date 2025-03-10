@@ -12,62 +12,79 @@ export default {
       },
     },
     two: {
-      // equal
       'a': {
-        point: [0, 0],
-        env: {
+        'point': [
+          0,
+          0,
+        ],
+        'env': {
           'b': false,
         },
-        memo: {
-          float: 0,
+        'memo': {
+          'float': 0,
         },
+        'name': 'a',
       },
       'b': {
-        point: [1, 0],
-        env: {
+        'point': [
+          1,
+          0,
+        ],
+        'env': {
           'a': false,
         },
-        memo: {
-          float: 0,
+        'memo': {
+          'float': 0,
         },
+        'name': 'b',
       },
-      // shift
       'c': {
-        point: [0, 1],
-        env: {
+        'point': [
+          0,
+          1,
+        ],
+        'env': {
           'd': false,
         },
-        memo: {
-          float: 0,
+        'memo': {
+          'float': 0,
         },
+        'name': 'a',
       },
       'd': {
-        point: [1, 1],
-        env: {
+        'point': [
+          1,
+          1,
+        ],
+        'env': {
           'c': true,
         },
-        memo: {
-          float: -Infinity,
+        'memo': {
+          'float': null,
         },
+        'name': 'b',
       },
-      // operation
       'e': {
-        point: [0, 2],
-        env: {
+        'point': [
+          0,
+          2,
+        ],
+        'env': {
           'f': true,
         },
-        memo: {
-          float: undefined,
-        },
+        'memo': {},
+        'name': 'a',
       },
       'f': {
-        point: [1, 2],
-        env: {
+        'point': [
+          1,
+          2,
+        ],
+        'env': {
           'e': true,
         },
-        memo: {
-          float: undefined,
-        },
+        'memo': {},
+        'name': 'b',
       },
     },
     three: {
@@ -233,163 +250,331 @@ export default {
   },
   user: {
     'operation': {
-      // addition
-      'a': {
-        point: [0, 0],
-        env: {
-          'b': true,
+      '54fd8d2b-ff97-49f1-bdd8-5c757a9cd6c9': {
+        'point': [
+          0,
+          0,
+        ],
+        'env': {
+          '3f15c2d2-96bc-4dca-be1a-bf6e3d3e84a8': true,
+        },
+        'name': 'a',
+      },
+      '3f15c2d2-96bc-4dca-be1a-bf6e3d3e84a8': {
+        'point': [
+          1,
+          0,
+        ],
+        'env': {
+          '54fd8d2b-ff97-49f1-bdd8-5c757a9cd6c9': true,
+          '6bcfa220-4938-43c1-ae4a-1a90ddcdf2fb': true,
+        },
+        'name': 'c',
+      },
+      '6bcfa220-4938-43c1-ae4a-1a90ddcdf2fb': {
+        'point': [
+          2,
+          0,
+        ],
+        'env': {
+          '3f15c2d2-96bc-4dca-be1a-bf6e3d3e84a8': true,
+        },
+        'name': 'b',
+      },
+      '72743b1a-d029-4f52-8702-6c53e9577ab4': {
+        'point': [
+          1,
+          2,
+        ],
+        'env': {
+          'bbe31a60-38ef-4460-a8e7-78ea384bb4f6': true,
+          'e6a66c7e-232e-4cd4-ab1c-2522679ca08f': true,
+          'b133f3e9-bb56-442f-bc2e-6345ff6888cd': false,
         },
       },
-      'b': {
-        point: [1, 1],
-        env: {
-          'a': true,
-          'c': true,
+      'b133f3e9-bb56-442f-bc2e-6345ff6888cd': {
+        'point': [
+          1,
+          3,
+        ],
+        'env': {
+          '72743b1a-d029-4f52-8702-6c53e9577ab4': false,
         },
       },
-      'c': {
-        point: [0, 2],
-        env: {
-          'b': true,
+      'e6a66c7e-232e-4cd4-ab1c-2522679ca08f': {
+        'point': [
+          2,
+          2,
+        ],
+        'env': {
+          '72743b1a-d029-4f52-8702-6c53e9577ab4': true,
         },
+        'name': 'b',
       },
-      // multiplication
-      'd': {
-        point: [0, 3],
-        env: {
-          'e': true,
+      'bbe31a60-38ef-4460-a8e7-78ea384bb4f6': {
+        'point': [
+          0,
+          2,
+        ],
+        'env': {
+          '72743b1a-d029-4f52-8702-6c53e9577ab4': true,
         },
+        'name': 'a',
       },
-      'e': {
-        point: [1, 3],
-        env: {
-          'd': true,
-          'h': false,
+      'e0ab71d6-4c41-4c8f-9562-da9f72b45d58': {
+        'point': [
+          3,
+          0,
+        ],
+        'env': {
+          '3996c505-1637-4d01-9c91-fc57270cf63a': true,
         },
+        'name': 'a',
       },
-      'f': {
-        point: [0, 5],
-        env: {
-          'g': true,
-        },
-      },
-      'g': {
-        point: [1, 5],
-        env: {
-          'f': true,
-          'h': false,
-        },
-      },
-      'h': {
-        point: [2, 4],
-        env: {
-          'e': true,
-          'g': true,
-          'i': false,
-        },
-      },
-      'i': {
-        point: [3, 4],
-        env: {
-          'h': false,
-          'j': true,
-        },
-      },
-      'j': {
-        point: [4, 4],
-        env: {
-          'i': false,
-          'k': true,
-        },
-      },
-      'k': {
-        point: [5, 4],
-        env: {
-          'j': true,
-        },
-      },
-      // exponentiation
-      'l': {
-        point: [1, 6],
-        env: {
-          'm': true,
-        },
-      },
-      'm': {
-        point: [2, 6],
-        env: {
-          'l': true,
-          'q': false,
-        },
-      },
-      'n': {
-        point: [0, 8],
-        env: {
-          'o': true,
-        },
-      },
-      'o': {
-        point: [1, 8],
-        env: {
-          'n': true,
-          'p': false,
-        },
-      },
-      'p': {
-        point: [2, 8],
-        env: {
-          'o': true,
-          'q': false,
-        },
-      },
-      'q': {
-        point: [3, 7],
-        env: {
-          'm': true,
-          'p': true,
-          'r': false,
-        },
-      },
-      'r': {
-        point: [4, 7],
-        env: {
-          'q': false,
-          's': true,
-        },
-      },
-      's': {
-        point: [5, 7],
-        env: {
-          'r': false,
-          't': true,
-        },
-      },
-      't': {
-        point: [6, 7],
-        env: {
-          's': false,
-          'u': true,
-        },
-      },
-      'u': {
-        point: [7, 7],
-        env: {
-          't': true,
-        },
-      },
-    },
-    'temperature': {
-      'a': {
+      '3996c505-1637-4d01-9c91-fc57270cf63a': {
         'point': [
           4,
           0,
         ],
-        'env': {},
-        'memo': {
-          'float': 0,
+        'env': {
+          'e0ab71d6-4c41-4c8f-9562-da9f72b45d58': true,
+          '73e617d9-c1bf-4c8b-b232-d0681b53b210': false,
         },
-        'float': 0,
       },
+      '73e617d9-c1bf-4c8b-b232-d0681b53b210': {
+        'point': [
+          5,
+          0,
+        ],
+        'env': {
+          '3996c505-1637-4d01-9c91-fc57270cf63a': true,
+          '34b19bae-bc8e-4d27-aecc-d4a5cca7e881': true,
+          '9959b13f-67fa-4498-bab6-d11b1dddfbaf': false,
+        },
+      },
+      '34b19bae-bc8e-4d27-aecc-d4a5cca7e881': {
+        'point': [
+          6,
+          0,
+        ],
+        'env': {
+          '73e617d9-c1bf-4c8b-b232-d0681b53b210': false,
+          '6e8a2f34-8481-4c46-bca0-68f3e7119139': true,
+        },
+      },
+      '6e8a2f34-8481-4c46-bca0-68f3e7119139': {
+        'point': [
+          7,
+          0,
+        ],
+        'env': {
+          '34b19bae-bc8e-4d27-aecc-d4a5cca7e881': true,
+        },
+        'name': 'b',
+      },
+      'ddedaecd-d204-49bf-8956-0d445e7b7942': {
+        'point': [
+          4,
+          1,
+        ],
+        'env': {
+          '9959b13f-67fa-4498-bab6-d11b1dddfbaf': false,
+          '23818a1d-ce0f-4335-a03c-53083ca34c34': true,
+        },
+      },
+      '9959b13f-67fa-4498-bab6-d11b1dddfbaf': {
+        'point': [
+          5,
+          1,
+        ],
+        'env': {
+          'ddedaecd-d204-49bf-8956-0d445e7b7942': true,
+          '73e617d9-c1bf-4c8b-b232-d0681b53b210': false,
+        },
+      },
+      '23818a1d-ce0f-4335-a03c-53083ca34c34': {
+        'point': [
+          3,
+          1,
+        ],
+        'env': {
+          'ddedaecd-d204-49bf-8956-0d445e7b7942': true,
+        },
+        'name': 'c',
+      },
+      '3407fa55-e1d8-4a22-ba98-404dca187662': {
+        'point': [
+          3,
+          2,
+        ],
+        'env': {
+          'e38b6f6d-afea-460e-95f2-ea1b99e9dba5': true,
+        },
+        'name': 'a',
+      },
+      'e38b6f6d-afea-460e-95f2-ea1b99e9dba5': {
+        'point': [
+          4,
+          2,
+        ],
+        'env': {
+          '609cc53e-0aff-4907-a7c4-4616ffbe250f': false,
+          '3407fa55-e1d8-4a22-ba98-404dca187662': true,
+        },
+      },
+      '609cc53e-0aff-4907-a7c4-4616ffbe250f': {
+        'point': [
+          5,
+          2,
+        ],
+        'env': {
+          'e38b6f6d-afea-460e-95f2-ea1b99e9dba5': true,
+          '37c972ab-0b7a-41b4-8ed1-6c41731f66ea': true,
+          '16a1fa2b-e9ad-45ad-ab24-3c81487b2454': false,
+        },
+      },
+      '37c972ab-0b7a-41b4-8ed1-6c41731f66ea': {
+        'point': [
+          6,
+          2,
+        ],
+        'env': {
+          '609cc53e-0aff-4907-a7c4-4616ffbe250f': false,
+          'fc4be57f-8878-4af0-a70a-435c26157e78': true,
+        },
+      },
+      'fc4be57f-8878-4af0-a70a-435c26157e78': {
+        'point': [
+          7,
+          2,
+        ],
+        'env': {
+          '37c972ab-0b7a-41b4-8ed1-6c41731f66ea': true,
+        },
+        'name': 'b',
+      },
+      '16a1fa2b-e9ad-45ad-ab24-3c81487b2454': {
+        'point': [
+          5,
+          3,
+        ],
+        'env': {
+          'e8835d01-ef71-4baf-a57f-53fb2e071095': true,
+          '609cc53e-0aff-4907-a7c4-4616ffbe250f': false,
+        },
+      },
+      'e8835d01-ef71-4baf-a57f-53fb2e071095': {
+        'point': [
+          4,
+          3,
+        ],
+        'env': {
+          '16a1fa2b-e9ad-45ad-ab24-3c81487b2454': false,
+        },
+      },
+      '488d8ff7-2483-422e-99b5-49f453e6229b': {
+        'point': [
+          8,
+          0,
+        ],
+        'env': {
+          '98c7a742-d2b3-4211-99ad-69ac0427ed0c': true,
+        },
+        'name': 'a',
+      },
+      '98c7a742-d2b3-4211-99ad-69ac0427ed0c': {
+        'point': [
+          9,
+          0,
+        ],
+        'env': {
+          '488d8ff7-2483-422e-99b5-49f453e6229b': true,
+          'b2eb018f-117a-438c-a9cb-95e022441214': false,
+        },
+      },
+      'b2eb018f-117a-438c-a9cb-95e022441214': {
+        'point': [
+          10,
+          0,
+        ],
+        'env': {
+          '98c7a742-d2b3-4211-99ad-69ac0427ed0c': true,
+          '6410b142-1475-4514-b996-c9b8b54fcc4e': false,
+        },
+      },
+      '6410b142-1475-4514-b996-c9b8b54fcc4e': {
+        'point': [
+          11,
+          0,
+        ],
+        'env': {
+          'b2eb018f-117a-438c-a9cb-95e022441214': true,
+          '3622f38f-56da-4f3a-b0e4-83bdbc42c1c5': true,
+          '6b059ed6-1aad-4623-a1e7-e2c6736e23e4': false,
+        },
+      },
+      '3622f38f-56da-4f3a-b0e4-83bdbc42c1c5': {
+        'point': [
+          12,
+          0,
+        ],
+        'env': {
+          '6410b142-1475-4514-b996-c9b8b54fcc4e': false,
+          '909c3423-4690-43fd-852b-2d161ce800f1': true,
+        },
+      },
+      '909c3423-4690-43fd-852b-2d161ce800f1': {
+        'point': [
+          13,
+          0,
+        ],
+        'env': {
+          '3622f38f-56da-4f3a-b0e4-83bdbc42c1c5': true,
+        },
+        'name': 'b',
+      },
+      '6b059ed6-1aad-4623-a1e7-e2c6736e23e4': {
+        'point': [
+          11,
+          1,
+        ],
+        'env': {
+          '045710fb-b97a-4329-ad6b-799df21de50a': true,
+          '6410b142-1475-4514-b996-c9b8b54fcc4e': false,
+        },
+      },
+      '045710fb-b97a-4329-ad6b-799df21de50a': {
+        'point': [
+          10,
+          1,
+        ],
+        'env': {
+          '11d071f9-8bcd-42e3-bd3a-585c37c7645c': true,
+          '6b059ed6-1aad-4623-a1e7-e2c6736e23e4': false,
+        },
+      },
+      '11d071f9-8bcd-42e3-bd3a-585c37c7645c': {
+        'point': [
+          9,
+          1,
+        ],
+        'env': {
+          '8cce539b-308e-4203-9692-ba0353558955': true,
+          '045710fb-b97a-4329-ad6b-799df21de50a': false,
+        },
+      },
+      '8cce539b-308e-4203-9692-ba0353558955': {
+        'point': [
+          8,
+          1,
+        ],
+        'env': {
+          '11d071f9-8bcd-42e3-bd3a-585c37c7645c': true,
+        },
+        'name': 'c',
+      },
+    },
+    'temperature': {
       '60e30fa7-2ce7-4b02-b9e0-6c392daca325': {
         'point': [
           1,
@@ -441,6 +626,7 @@ export default {
           '44ade758-0a8e-44e0-86f1-8a54fc2f6b79': true,
         },
         'float': 9,
+        'name': '9',
       },
       'a1ed6fd6-571c-488a-8d73-20496283e44a': {
         'point': [
@@ -471,6 +657,7 @@ export default {
           '91b317db-2719-49dd-a512-6385589752d6': true,
         },
         'float': 5,
+        'name': '5',
       },
       '543e9d25-3d7a-4507-b725-ca4bc7f03f70': {
         'point': [
@@ -482,22 +669,14 @@ export default {
           '2ad4348b-90c0-4149-95c2-e1ba32da1f8a': true,
         },
       },
-      '8c9d1429-2deb-4642-af02-fe1722c34854': {
-        'point': [
-          4,
-          -1,
-        ],
-        'env': {},
-      },
       '0303a9e3-be01-4ba9-8e68-b0148567ea6d': {
         'point': [
-          1,
+          3,
           1,
         ],
         'env': {
           'e6bfa95a-aa13-41b0-8e99-538acf593066': true,
         },
-        'float': 50,
         'name': 'F',
       },
       'e6bfa95a-aa13-41b0-8e99-538acf593066': {
@@ -530,6 +709,7 @@ export default {
           '2ad4348b-90c0-4149-95c2-e1ba32da1f8a': true,
         },
         'float': 32,
+        'name': '32',
       },
     },
   },
