@@ -367,6 +367,23 @@ const updateNodeCircleVisibility = function(circleSelection) {
   return circleSelection;
 };
 
+const updateNodeText = function(textSelection) {
+  textSelection.text((d) => {
+    const node = d[1];
+    if ('value' in node) {
+      return node.value;
+    }
+
+    if ('name' in node) {
+      return node.name;
+    }
+
+    return '';
+  });
+
+  return textSelection;
+};
+
 const innerOver = function(e, d, i) {
   hovered = [d[0], false];
 
@@ -417,9 +434,17 @@ const nodePrompt = function(event, d) {
       d[1].float = float;
     }
   }
+
+  updateNodeText(d3.select(this).select('text'));
 };
 
 const enterNode = function(selection) {
+  const drag = d3.drag()
+  // .filter(dragFilter) // respond to right-click
+      .on('start', nodeDragStarted)
+      .on('drag', nodeDragged)
+      .on('end', nodeDragEnded);
+
   const groupSelection = selection.append('g')
       .attr('id', entryId)
       .attr('transform', (d) => 'translate(' + d[1].point.join(',') + ')')
@@ -427,15 +452,8 @@ const enterNode = function(selection) {
       // .on('contextmenu', (e) => e.preventDefault()); // respond to right-click
       .on('mouseover', nodeOver)
       .on('mouseout', nodeOut)
-      .on('dblclick', nodePrompt);
-
-  groupSelection.call(
-      d3.drag()
-          // .filter(dragFilter) // respond to right-click
-          .on('start', nodeDragStarted)
-          .on('drag', nodeDragged)
-          .on('end', nodeDragEnded),
-  );
+      .on('dblclick', nodePrompt)
+      .call(drag);
 
   const outerSelection = groupSelection.append('circle')
       .attr('r', thickness * 4)
@@ -454,12 +472,15 @@ const enterNode = function(selection) {
 
   updateNodeCircleFill(innerSelection);
 
-  groupSelection
+  const textSelection = groupSelection.append('text')
       .style('font-family', 'Roboto Mono, sans-serif')
       .style('font-weight', 'bold')
-      .style('font-size', '0.25px')
+      .style('font-size', '0.125px')
       .style('text-anchor', 'middle')
-      .style('dominant-baseline', 'middle');
+      .style('dominant-baseline', 'middle')
+      .style('pointer-events', 'none'); // ignore mouseover, mouseout
+
+  updateNodeText(textSelection);
 
   return groupSelection;
 };
@@ -484,6 +505,16 @@ const updateNode = function(groupSelection) {
       .on('mouseout', innerOut);
 
   updateNodeCircleFill(innerSelection);
+
+  const textSelection = groupSelection.append('text')
+      .style('font-family', 'Roboto Mono, sans-serif')
+      .style('font-weight', 'bold')
+      .style('font-size', '0.125px')
+      .style('text-anchor', 'middle')
+      .style('dominant-baseline', 'middle')
+      .style('pointer-events', 'none');
+
+  updateNodeText(textSelection);
   //
   // TODO: Replace with updates
   //
