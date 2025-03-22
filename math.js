@@ -19,6 +19,7 @@ const shifts = {
 Object.values(shifts).forEach((o) => {
   o.string = (a) => o.symbol[0] + a + o.symbol[1];
 
+  // TODO: remove?
   o.eager = {
     string: (a) => ({
       shift: o.shift,
@@ -70,10 +71,19 @@ const shiftBy = function(shifts) {
 const shiftTo = function(shifts) {
   const by = shiftBy(shifts);
 
-  return (n, a) => by(n - a.shift, a);
+  return function(n, a) {
+    const b = by(n - a.shift, a)
+
+    // consider passing whether equal is acceptable
+    if (b.precedence < n) {
+      return shifts.identity(b)
+    }
+
+    return b;
+  };
 };
 
-// // https://observablehq.com/@ishi/arithmetic
+// https://observablehq.com/@ishi/arithmetic
 // const hyperlogarithmicOperations = [
 //   {
 //     identity: {
@@ -104,18 +114,22 @@ const shiftTo = function(shifts) {
 //       float: 0,
 //     },
 //     commutation: {
+//       shift: [0, 0, 0],
 //       name: 'addition',
 //       symbol: '+',
 //       float: (a, b) => a + b,
 //       string: (a, b) => a + ' + ' + b,
 //     },
 //     reversion: {
+//       shift: [0, 0, 0],
+//       bias: 'left',
 //       name: 'subtraction',
 //       symbol: '-',
 //       float: (a, b) => b === -Infinity ? NaN : a - b,
 //       string: (a, b) => a + ' - ' + b,
 //     },
 //     transaction: {
+//       shift: [0, 1, 1],
 //       name: 'amplification',
 //       symbol: '⇐',
 //     },
@@ -174,34 +188,57 @@ const undefinedF = (f) => function(...args) {
   }
 };
 
-// const shiftPositive = function(field) {
-//   const operations = [];
-//   const j = hyperlogarithmicOperations.findIndex((a) => a.identity === 0);
-//   hyperlogarithmicOperations.forEach((operation, i) => {
-//     const commutation = operation.commutation;
-//     if (field in commutation) {
-//       operations.push([[i - j, i - j, i - j], operation.commutation[field]]);
-//     }
+const shiftOperation = function(to, op, l, r, o) {
+  return function(a, b) {
+    console.log(a);
+    console.log(b);
 
-//     const transaction = operation.transaction;
-//     if (field in transaction) {
-//       operations.push([[i - j, i, i - k], operation.commutation[field]]);
-//     }
-//   });
+    a = to(l, a);
+    b = to(r, b);
 
-//   const shiftOps = Object.fromEntries(
-//     Object.entries(obj).map(
-//       ([k, v], i) => [k, fn(v, k, i)]
-//     )
-//   )
+    console.log(a);
+    console.log(b);
 
+    return {
+      shift: o,
+      precedence: o,
+      string: op(a.string, b.string),
+    };
+  };
+};
 
-//         shiftOperations.map((k, v) [field];
-//   const down = shiftOperations.down[field];
+// const matchOperation = function(l, r, o) {
+
+// }
 
 
-//   const shiftToField = shiftTo(field);
-//   const predecenceToField = precedenceOperations[field];
+// const shiftOperation = function(shifts, operations) {
+//   // const operations = [];
+//   // const j = hyperlogarithmicOperations.findIndex((a) => a.identity === 0);
+//   // hyperlogarithmicOperations.forEach((operation, i) => {
+//   //   const commutation = operation.commutation;
+//   //   if (field in commutation) {
+//   //     operations.push([[i - j, i - j, i - j], operation.commutation[field]]);
+//   //   }
+
+//   //   const transaction = operation.transaction;
+//   //   if (field in transaction) {
+//   //     operations.push([[i - j, i, i - k], operation.commutation[field]]);
+//   //   }
+//   // });
+
+//   // const shiftOps = Object.fromEntries(
+//   //   Object.entries(obj).map(
+//   //     ([k, v], i) => [k, fn(v, k, i)]
+//   //   )
+//   // )
+
+
+//   // shiftOperations.map((k, v) [field];
+//   // const down = shiftOperations.down[field];
+
+
+//   const to = shiftTo(shifts);
 
 //   return function(a, b) {
 //     let operation;
@@ -227,21 +264,11 @@ const undefinedF = (f) => function(...args) {
 //     console.log(a);
 //     console.log(b);
 
-//     a = shiftToField(a.shift - s[0])(a.value);
-//     b = shiftToField(b.shift - s[1])(b.value);
+//     a = to(s[0])(a);
+//     b = to(s[1])(b);
 
 //     console.log(a);
 //     console.log(b);
-
-//     if (predecenceToField !== undefined) {
-//       if (a.precedence > 0) {
-//         a = predecenceToField(a);
-//       }
-
-//       if (b.precedence > 0) {
-//         b = predecenceToField(b);
-//       }
-//     }
 
 //     return {
 //       shift: s[2],
@@ -250,6 +277,7 @@ const undefinedF = (f) => function(...args) {
 //     };
 //   };
 // };
+
 
 // identities
 
@@ -263,7 +291,7 @@ const undefinedF = (f) => function(...args) {
 // execution
 
 export {
-  shifts, shiftBy, shiftTo, // shiftPositive,
+  shifts, shiftBy, shiftTo, shiftOperation,
   // undefinedF,
   // commutationWrapper,
 };

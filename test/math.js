@@ -1,5 +1,5 @@
 import {
-  shifts, shiftBy, shiftTo, // shiftPositive,
+  shifts, shiftBy, shiftTo, shiftOperation,
   // undefinedF,
   // commutationWrapper,
 } from '../math.js';
@@ -187,139 +187,36 @@ describe('shiftTo', () => {
   });
 });
 
+describe('shiftOperation', () => {
+  const stringShifts = Object.fromEntries(
+    Object.entries(shifts).map(([k, v]) => [k, v.lazy.string]),
+  );
 
-// describe('shiftTo', () => {
-//   describe('string', () => {
-//     const stringShifts = Object.fromEntries(
-//         Object.entries(shifts).map(([k, v]) => [k, v.string]),
-//     );
+  const to = shiftTo(stringShifts);
 
-// //    console.log(stringShifts.up('steve'))
+  const op = (a, b) => a + ' + ' + b;
 
-//     const shiftToString = shiftTo(stringShifts);
+  it('addition', () => {
+    const a = {
+      shift: -1,
+      precedence: -1,
+      string: 'a',
+    };
 
-//   //  console.log(shiftToString(1)('steve'))
+    const b = {
+      shift: 1,
+      precedence: 1,
+      string: 'b',
+    };
 
+    const actual = shiftOperation(to, op, 0, 0, 0)(a, b);
 
-//     it('none', () => {
-//       const initial = 'none';
+    const expected = {
+      shift: 0,
+      precedence: 0,
+      string: '⌈a⌉ + ⌊b⌋',
+    };
 
-//       const actual = shiftToString(0)(initial);
-
-//       const expected = initial;
-
-//       assert.deepEqual(expected, actual);
-//     });
-
-//     it('up', () => {
-//       const initial = 'up';
-
-//       const actual = shiftToString(2)(initial);
-
-//       const expected = '⌈⌈up⌉⌉';
-
-//       assert.equal(expected, actual);
-//     });
-
-//     it('down', () => {
-//       const initial = 'down';
-
-//       const actual = shiftToString(-1)(initial);
-
-//       const expected = '⌊down⌋';
-
-//       assert.equal(expected, actual);
-//     });
-//   });
-
-//   describe('shiftString', () => {
-//     const stringShifts = Object.fromEntries(
-//         Object.entries(shifts).map(([k, v]) => [k, v.shiftString]),
-//     );
-
-//     const shiftToString = shiftTo(stringShifts);
-
-//     it('none', () => {
-//       const initial = {
-//         shift: -1,
-//         precedence: 0,
-//         string: 'none',
-//       };
-
-//       const actual = shiftToString(0)(initial);
-
-//       const expected = {
-//         shift: -1,
-//         precedence: 0,
-//         string: 'none',
-//       };
-
-//       assert.deepEqual(expected, actual);
-//     });
-
-//     it('up', () => {
-//       const initial = {
-//         shift: 0,
-//         precedence: 0,
-//         string: 'up',
-//       };
-
-//       const actual = shiftToString(1)(initial);
-
-//       const expected = {
-//         shift: 1,
-//         precedence: Infinity,
-//         string: '⌈up⌉',
-//       };
-
-//       assert.deepEqual(expected, actual);
-//     });
-
-//     it('down', () => {
-//       const initial = {
-//         shift: 1,
-//         precedence: 0,
-//         string: 'down',
-//       };
-
-//       const actual = shiftToString(-2)(initial);
-
-//       const expected = {
-//         shift: -2,
-//         precedence: Infinity,
-//         string: '⌊⌊⌊down⌋⌋⌋',
-//       };
-
-//       assert.deepEqual(expected, actual);
-//     });
-//   });
-// });
-
-
-// describe('shiftPositive', () => {
-//   const shiftPositiveString = shiftPositive('string');
-
-//   it('addition', () => {
-//     const a = {
-//       shift: -1,
-//       precedence: -1,
-//       value: 'a',
-//     };
-
-//     const b = {
-//       shift: 1,
-//       precedence: 1,
-//       value: 'b',
-//     };
-
-//     const actual = shiftPositiveString(a, b);
-
-//     const expected = {
-//       shift: 0,
-//       precedence: 0,
-//       value: '⌊a⌋ + ⌈b⌉',
-//     };
-
-//     assert.deepEqual(expected, actual);
-//   });
-// });
+    assert.deepEqual(expected, actual);
+  });
+});
