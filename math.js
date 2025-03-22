@@ -47,28 +47,30 @@ Object.values(shifts).forEach((o) => {
 });
 
 // Assumes n is a safe integer
-const shiftBy = (shifts) => (n) => function(a) {
-  let i = 0
-  if (n >= i) {
-    while (n > i) {
-      a = shifts.up(a);
-      i++
+const shiftBy = function(shifts) {
+  return function(n, a) {
+    let i = 0;
+    if (n >= i) {
+      while (n > i) {
+        a = shifts.up(a);
+        i++;
+      }
+    } else {
+      while (n < i) {
+        a = shifts.down(a);
+        i--;
+      }
     }
-  } else {
-    while (n < i) {
-      a = shifts.down(a);
-      i--
-    }
-  }
 
-  return a;
+    return a;
+  };
 };
 
 // Assumes n is a safe integer
 const shiftTo = function(shifts) {
   const by = shiftBy(shifts);
 
-  return (n) => (a) => by(n - a.shift)(a)
+  return (n, a) => by(n - a.shift, a);
 };
 
 // // https://observablehq.com/@ishi/arithmetic
@@ -198,7 +200,6 @@ const undefinedF = (f) => function(...args) {
 //   const down = shiftOperations.down[field];
 
 
-
 //   const shiftToField = shiftTo(field);
 //   const predecenceToField = precedenceOperations[field];
 
@@ -250,19 +251,19 @@ const undefinedF = (f) => function(...args) {
 //   };
 // };
 
-  // identities
+// identities
 
-  // inversion
-  //
-  // commutation
-  // reversion
-  //
-  // transaction
-  // extraction
-  // execution
+// inversion
+//
+// commutation
+// reversion
+//
+// transaction
+// extraction
+// execution
 
 export {
-  shifts, shiftBy, shiftTo, //shiftPositive,
+  shifts, shiftBy, shiftTo, // shiftPositive,
   // undefinedF,
   // commutationWrapper,
 };

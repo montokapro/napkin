@@ -32,7 +32,7 @@ describe('shiftBy', () => {
     it('none', () => {
       const initial = 'none';
 
-      const actual = by(0)(initial);
+      const actual = by(0, initial);
 
       const expected = initial;
 
@@ -42,7 +42,7 @@ describe('shiftBy', () => {
     it('up', () => {
       const initial = 'up';
 
-      const actual = by(2)(initial);
+      const actual = by(2, initial);
 
       const expected = '⌈⌈up⌉⌉';
 
@@ -52,7 +52,7 @@ describe('shiftBy', () => {
     it('down', () => {
       const initial = 'down';
 
-      const actual = by(-1)(initial);
+      const actual = by(-1, initial);
 
       const expected = '⌊down⌋';
 
@@ -74,7 +74,7 @@ describe('shiftBy', () => {
         string: 'none',
       };
 
-      const actual = by(0)(initial);
+      const actual = by(0, initial);
 
       const expected = {
         shift: -1,
@@ -92,7 +92,7 @@ describe('shiftBy', () => {
         string: 'up',
       };
 
-      const actual = by(1)(initial);
+      const actual = by(1, initial);
 
       const expected = {
         shift: 1,
@@ -110,7 +110,7 @@ describe('shiftBy', () => {
         string: 'down',
       };
 
-      const actual = by(-2)(initial);
+      const actual = by(-2, initial);
 
       const expected = {
         shift: -1,
@@ -138,7 +138,7 @@ describe('shiftTo', () => {
         string: 'none',
       };
 
-      const actual = to(0)(initial);
+      const actual = to(0, initial);
 
       const expected = {
         shift: 0,
@@ -156,7 +156,7 @@ describe('shiftTo', () => {
         string: 'up',
       };
 
-      const actual = to(1)(initial);
+      const actual = to(1, initial);
 
       const expected = {
         shift: 1,
@@ -174,7 +174,7 @@ describe('shiftTo', () => {
         string: 'down',
       };
 
-      const actual = to(-2)(initial);
+      const actual = to(-2, initial);
 
       const expected = {
         shift: -2,
@@ -195,12 +195,12 @@ describe('shiftTo', () => {
 //     );
 
 // //    console.log(stringShifts.up('steve'))
-    
+
 //     const shiftToString = shiftTo(stringShifts);
 
 //   //  console.log(shiftToString(1)('steve'))
-    
-    
+
+
 //     it('none', () => {
 //       const initial = 'none';
 
@@ -236,7 +236,7 @@ describe('shiftTo', () => {
 //     const stringShifts = Object.fromEntries(
 //         Object.entries(shifts).map(([k, v]) => [k, v.shiftString]),
 //     );
-    
+
 //     const shiftToString = shiftTo(stringShifts);
 
 //     it('none', () => {
