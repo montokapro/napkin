@@ -23,12 +23,12 @@ Object.values(shifts).forEach((o) => {
   o.eager = {
     string: (a) => ({
       shift: o.shift,
-      string: o.string(a.string),
+      value: o.string(a.value),
     }),
 
     float: (a) => ({
       shift: o.shift,
-      float: o.float(a.float),
+      value: o.float(a.value),
     }),
   };
 
@@ -36,13 +36,13 @@ Object.values(shifts).forEach((o) => {
     string: (a) => ({
       shift: o.shift + a.shift,
       precedence: Infinity,
-      string: o.string(a.string),
+      value: o.string(a.value),
     }),
 
     float: (a) => ({
       shift: o.shift + a.shift,
       precedence: Infinity,
-      float: o.float(a.float),
+      value: o.float(a.value),
     }),
   };
 });
@@ -202,14 +202,85 @@ const shiftOperation = function(to, op, l, r, o) {
     return {
       shift: o,
       precedence: o,
-      string: op(a.string, b.string),
+      value: op(a.value, b.value),
     };
   };
 };
 
-// const matchOperation = function(l, r, o) {
+const nearestOperation = function(left, right, equal) {
+  const operations = [
+    {
+      symbol: '+',
+      left: {
+        shift: 1,
+        associative: true,
+      },
+      right: {
+        shift: 0,
+        associative: true,
+      },
+      equal: {
+        shift: 0,
+      },
+      string: (a, b) => a + ' + ' + b
+    },
+    {
+      symbol: '*',
+      left: {
+        shift: 1,
+        associative: true,
+      },
+      right: {
+        shift: 1,
+        associative: true,
+      },
+      equal: {
+        shift: 1,
+      },
+      string: (a, b) => a + ' * ' + b
+    },
+    {
+      symbol: '<-',
+      left: {
+        shift: 1,
+      },
+      right: {
+        shift: 2,
+        associative: true,
+      },
+      equal: {
+        shift: 2,
+      },
+      string: (a, b) => a + ' <- ' + b
+    }
+  ];
 
-// }
+  let operation;
+  let heuristic = Infinity;
+
+  operations.forEach((o) => {
+    let h = 0;
+
+    if (left !== undefined) {
+      h += Math.abs(left - o.left.shift)
+    }
+
+    if (right !== undefined) {
+      h += Math.abs(right - o.right.shift)
+    }
+
+    if (equal !== undefined) {
+      h += Math.abs(equal - o.center.shift)
+    }
+
+    if (heuristic > h) {
+      operation = o;
+      heuristic = h;
+    }
+  });
+
+  return operation;
+}
 
 
 // const shiftOperation = function(shifts, operations) {
@@ -292,6 +363,7 @@ const shiftOperation = function(to, op, l, r, o) {
 
 export {
   shifts, shiftBy, shiftTo, shiftOperation,
+  nearestOperation,
   // undefinedF,
   // commutationWrapper,
 };

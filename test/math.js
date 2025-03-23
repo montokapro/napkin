@@ -1,5 +1,6 @@
 import {
   shifts, shiftBy, shiftTo, shiftOperation,
+  nearestOperation,
   // undefinedF,
   // commutationWrapper,
 } from '../math.js';
@@ -71,7 +72,7 @@ describe('shiftBy', () => {
       const initial = {
         shift: -1,
         precedence: 0,
-        string: 'none',
+        value: 'none',
       };
 
       const actual = by(0, initial);
@@ -79,7 +80,7 @@ describe('shiftBy', () => {
       const expected = {
         shift: -1,
         precedence: 0,
-        string: 'none',
+        value: 'none',
       };
 
       assert.deepEqual(expected, actual);
@@ -89,7 +90,7 @@ describe('shiftBy', () => {
       const initial = {
         shift: 0,
         precedence: 0,
-        string: 'up',
+        value: 'up',
       };
 
       const actual = by(1, initial);
@@ -97,7 +98,7 @@ describe('shiftBy', () => {
       const expected = {
         shift: 1,
         precedence: Infinity,
-        string: '⌈up⌉',
+        value: '⌈up⌉',
       };
 
       assert.deepEqual(expected, actual);
@@ -107,7 +108,7 @@ describe('shiftBy', () => {
       const initial = {
         shift: 1,
         precedence: 0,
-        string: 'down',
+        value: 'down',
       };
 
       const actual = by(-2, initial);
@@ -115,7 +116,7 @@ describe('shiftBy', () => {
       const expected = {
         shift: -1,
         precedence: Infinity,
-        string: '⌊⌊down⌋⌋',
+        value: '⌊⌊down⌋⌋',
       };
 
       assert.deepEqual(expected, actual);
@@ -135,7 +136,7 @@ describe('shiftTo', () => {
       const initial = {
         shift: -1,
         precedence: 0,
-        string: 'none',
+        value: 'none',
       };
 
       const actual = to(0, initial);
@@ -143,7 +144,7 @@ describe('shiftTo', () => {
       const expected = {
         shift: 0,
         precedence: Infinity,
-        string: '⌈none⌉',
+        value: '⌈none⌉',
       };
 
       assert.deepEqual(expected, actual);
@@ -153,7 +154,7 @@ describe('shiftTo', () => {
       const initial = {
         shift: 0,
         precedence: 0,
-        string: 'up',
+        value: 'up',
       };
 
       const actual = to(1, initial);
@@ -161,7 +162,7 @@ describe('shiftTo', () => {
       const expected = {
         shift: 1,
         precedence: Infinity,
-        string: '⌈up⌉',
+        value: '⌈up⌉',
       };
 
       assert.deepEqual(expected, actual);
@@ -171,7 +172,7 @@ describe('shiftTo', () => {
       const initial = {
         shift: 1,
         precedence: 0,
-        string: 'down',
+        value: 'down',
       };
 
       const actual = to(-2, initial);
@@ -179,7 +180,7 @@ describe('shiftTo', () => {
       const expected = {
         shift: -2,
         precedence: Infinity,
-        string: '⌊⌊⌊down⌋⌋⌋',
+        value: '⌊⌊⌊down⌋⌋⌋',
       };
 
       assert.deepEqual(expected, actual);
@@ -200,13 +201,13 @@ describe('shiftOperation', () => {
     const a = {
       shift: -1,
       precedence: -1,
-      string: 'a',
+      value: 'a',
     };
 
     const b = {
       shift: 1,
       precedence: 1,
-      string: 'b',
+      value: 'b',
     };
 
     const actual = shiftOperation(to, op, 0, 0, 0)(a, b);
@@ -214,9 +215,15 @@ describe('shiftOperation', () => {
     const expected = {
       shift: 0,
       precedence: 0,
-      string: '⌈a⌉ + ⌊b⌋',
+      value: '⌈a⌉ + ⌊b⌋',
     };
 
     assert.deepEqual(expected, actual);
+  });
+});
+
+describe('nearestOperation', () => {
+  it('addition', () => {
+    assert.equal('+', nearestOperation(-1, 0).symbol);
   });
 });
